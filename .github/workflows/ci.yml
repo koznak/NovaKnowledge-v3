@@ -46,19 +46,46 @@ jobs:
     if: github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        service:
-          - gateway
-          - chat-api
-          - orchestration-api
-          - ingestion-api
-          - search-api
-          - feedback-api
-          - admin-api
+        include:
+          - service: gateway
+            dockerfile: docker/Dockerfile.gateway
+          - service: chat-api
+            dockerfile: docker/Dockerfile.service
+            project_path: src/Services/Chat/NovaKnowledge.Chat.Api/NovaKnowledge.Chat.Api.csproj
+            assembly_dll: NovaKnowledge.Chat.Api.dll
+          - service: orchestration-api
+            dockerfile: docker/Dockerfile.service
+            project_path: src/Services/Orchestration/NovaKnowledge.Orchestration.Api/NovaKnowledge.Orchestration.Api.csproj
+            assembly_dll: NovaKnowledge.Orchestration.Api.dll
+          - service: ingestion-api
+            dockerfile: docker/Dockerfile.service
+            project_path: src/Services/Ingestion/NovaKnowledge.Ingestion.Api/NovaKnowledge.Ingestion.Api.csproj
+            assembly_dll: NovaKnowledge.Ingestion.Api.dll
+          - service: search-api
+            dockerfile: docker/Dockerfile.service
+            project_path: src/Services/Search/NovaKnowledge.Search.Api/NovaKnowledge.Search.Api.csproj
+            assembly_dll: NovaKnowledge.Search.Api.dll
+          - service: feedback-api
+            dockerfile: docker/Dockerfile.service
+            project_path: src/Services/Feedback/NovaKnowledge.Feedback.Api/NovaKnowledge.Feedback.Api.csproj
+            assembly_dll: NovaKnowledge.Feedback.Api.dll
+          - service: admin-api
+            dockerfile: docker/Dockerfile.service
+            project_path: src/Services/Admin/NovaKnowledge.Admin.Api/NovaKnowledge.Admin.Api.csproj
+            assembly_dll: NovaKnowledge.Admin.Api.dll
     steps:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -f docker/Dockerfile.${{ matrix.service }} -t novaknowledge/${{ matrix.service }}:latest .
+        run: |
+          if [ "${{ matrix.service }}" = "gateway" ]; then
+            docker build -f ${{ matrix.dockerfile }} -t novaknowledge/${{ matrix.service }}:latest .
+          else
+            docker build -f ${{ matrix.dockerfile }} \
+              --build-arg PROJECT_PATH=${{ matrix.project_path }} \
+              --build-arg ASSEMBLY_DLL=${{ matrix.assembly_dll }} \
+              -t novaknowledge/${{ matrix.service }}:latest .
+          fi
 
   deploy-dev:
     runs-on: ubuntu-latest
