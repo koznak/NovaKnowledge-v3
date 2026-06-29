@@ -1,0 +1,16 @@
+# Generic Dockerfile template for .NET microservices
+# Usage: docker build -f docker/Dockerfile.service --build-arg PROJECT_PATH=src/Services/Chat/NovaKnowledge.Chat.Api .
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG PROJECT_PATH
+WORKDIR /src
+COPY . .
+RUN dotnet restore "$PROJECT_PATH"
+RUN dotnet publish "$PROJECT_PATH" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "NovaKnowledge.Chat.Api.dll"]

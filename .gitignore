@@ -1,0 +1,46 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+
+## IDE
+.idea/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+
+## Secrets
+appsettings.Development.local.json
+appsettings.local.json
+*.pfx
+.env
+.env.*
+
+## Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+## OS
+Thumbs.db
+.DS_Store
+
+## Azure
+*.publishsettings
+local.settings.json
+
+## Test / coverage
+TestResults/
+coverage/
+*.coverage
+
+## Docker
+docker-data/
+
+## Local tools (k6 binary downloaded by scripts/run-load-test.ps1)
+tools/k6/

@@ -1,0 +1,83 @@
+﻿@page "/"
+@inject AdminApiClient Api
+
+<PageTitle>NovaKnowledge Admin</PageTitle>
+
+<div class="container-fluid py-4">
+    <h1 class="mb-4">NovaKnowledge Dashboard</h1>
+    <p class="text-muted">Contoso Corp Enterprise Knowledge Copilot — Admin Portal</p>
+
+    @if (_loading)
+    {
+        <div class="spinner-border text-primary" role="status"></div>
+    }
+    else if (_loadFailed)
+    {
+        <div class="alert alert-warning">Could not load metrics. Ensure Gateway (:5000) and Admin.Api (:5006) are running.</div>
+    }
+    else if (_metrics != null)
+    {
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted">Total Messages</h6>
+                        <h2>@_metrics.TotalMessages</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted">Total Tokens</h6>
+                        <h2>@_metrics.TotalTokens.ToString("N0")</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted">Est. Cost (USD)</h6>
+                        <h2>$@_metrics.EstimatedCostUsd.ToString("F4")</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted">Positive Feedback</h6>
+                        <h2>@(_metrics.PositiveFeedbackRate.ToString("P0"))</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5>Avg Latency</h5>
+                <p class="mb-0">@_metrics.AvgLatencyMs.ToString("F0") ms</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private UsageMetrics? _metrics;
+    private bool _loading = true;
+    private bool _loadFailed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _metrics = await Api.GetUsageAsync();
+        }
+        catch
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

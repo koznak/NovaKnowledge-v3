@@ -1,0 +1,96 @@
+@page "/documents"
+@inject AdminApiClient Api
+
+<PageTitle>Documents - NovaKnowledge</PageTitle>
+
+<h3>Document Management</h3>
+
+<div class="mb-4">
+    <InputFile OnChange="OnFileSelected" class="form-control" accept=".pdf,.docx,.txt,.md" />
+    @if (!string.IsNullOrEmpty(_uploadStatus))
+    {
+        <div class="alert alert-info mt-2">@_uploadStatus</div>
+    }
+</div>
+
+@if (_documents == null)
+{
+    <p>Loading documents...</p>
+}
+else if (_loadFailed)
+{
+    <div class="alert alert-warning">Could not load documents. Ensure Gateway (:5000) and Ingestion.Api (:5004) are running.</div>
+}
+else if (_documents.Count == 0)
+{
+    <p class="text-muted">No documents uploaded yet.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Uploaded</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in _documents)
+            {
+                <tr>
+                    <td>@doc.FileName</td>
+                    <td>@doc.Title</td>
+                    <td><span class="badge bg-secondary">@doc.Status</span></td>
+                    <td>@doc.CreatedAt.ToString("g")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<DocumentItem>? _documents;
+    private string? _uploadStatus;
+    private bool _loadFailed;
+
+    protected override async Task OnInitializedAsync() => await LoadDocuments();
+
+    private async Task LoadDocuments()
+    {
+        try
+        {
+            _documents = await Api.GetDocumentsAsync();
+            _loadFailed = false;
+        }
+        catch
+        {
+            _documents = [];
+            _loadFailed = true;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        _uploadStatus = "Uploading...";
+        await using var stream = file.OpenReadStream(maxAllowedSize: 52_428_800);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        ms.Position = 0;
+
+        try
+        {
+            await Api.UploadDocumentAsync(ms, file.Name, file.ContentType);
+            _uploadStatus = $"Uploaded {file.Name} — indexing queued.";
+            await LoadDocuments();
+        }
+        catch (Exception ex)
+        {
+            _uploadStatus = $"Upload failed: {ex.Message}";
+        }
+    }
+}

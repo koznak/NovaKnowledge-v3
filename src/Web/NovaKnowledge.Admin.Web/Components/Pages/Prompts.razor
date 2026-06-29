@@ -1,0 +1,80 @@
+@page "/prompts"
+@inject AdminApiClient Api
+
+<PageTitle>Prompts - NovaKnowledge</PageTitle>
+
+<h3>Prompt Templates</h3>
+
+@if (_prompts == null && !_loadFailed)
+{
+    <p>Loading...</p>
+}
+else if (_loadFailed)
+{
+    <div class="alert alert-warning">Could not load prompts. Ensure Gateway (:5000) and Admin.Api (:5006) are running.</div>
+}
+else if (_prompts != null)
+{
+    <table class="table">
+        <thead>
+            <tr><th>Name</th><th>Category</th><th>Version</th><th>Active</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in _prompts)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td>@p.Category</td>
+                    <td>v@p.Version</td>
+                    <td>@(p.IsActive ? "Yes" : "No")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="mt-4">
+    <button class="btn btn-primary" @onclick="TriggerEval" disabled="@_evalRunning">
+        @(_evalRunning ? "Running..." : "Trigger RAG Evaluation")
+    </button>
+    @if (!string.IsNullOrEmpty(_evalStatus))
+    {
+        <span class="ms-2 text-muted">@_evalStatus</span>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<PromptTemplate>? _prompts;
+    private bool _evalRunning;
+    private string? _evalStatus;
+    private bool _loadFailed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _prompts = await Api.GetPromptsAsync();
+            _loadFailed = false;
+        }
+        catch
+        {
+            _prompts = [];
+            _loadFailed = true;
+        }
+    }
+
+    private async Task TriggerEval()
+    {
+        _evalRunning = true;
+        try
+        {
+            await Api.TriggerEvaluationAsync();
+            _evalStatus = "Evaluation triggered successfully.";
+        }
+        catch (Exception ex)
+        {
+            _evalStatus = $"Failed: {ex.Message}";
+        }
+        finally { _evalRunning = false; }
+    }
+}

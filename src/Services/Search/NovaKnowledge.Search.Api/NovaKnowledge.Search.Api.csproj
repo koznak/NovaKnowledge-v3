@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\NovaKnowledge.Infrastructure\NovaKnowledge.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\NovaKnowledge.Contracts\NovaKnowledge.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Shared\NovaKnowledge.Application\NovaKnowledge.Application.csproj" />
+    <ProjectReference Include="..\..\..\Shared\NovaKnowledge.Domain\NovaKnowledge.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+  </ItemGroup>
+
+</Project>

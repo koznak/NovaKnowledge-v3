@@ -1,0 +1,6 @@
+@NovaKnowledge.Search.Api_HostAddress = http://localhost:5134
+
+GET {{NovaKnowledge.Search.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

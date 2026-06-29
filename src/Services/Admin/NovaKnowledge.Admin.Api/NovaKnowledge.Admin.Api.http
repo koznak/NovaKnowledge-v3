@@ -1,0 +1,6 @@
+@NovaKnowledge.Admin.Api_HostAddress = http://localhost:5095
+
+GET {{NovaKnowledge.Admin.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

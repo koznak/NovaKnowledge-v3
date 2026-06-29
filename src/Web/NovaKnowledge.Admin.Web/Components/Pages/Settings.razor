@@ -1,0 +1,62 @@
+@page "/settings"
+@inject AdminApiClient Api
+@using NovaKnowledge.Contracts.Admin
+
+<PageTitle>Settings - NovaKnowledge</PageTitle>
+
+<h3>Tenant Settings</h3>
+
+@if (_loading)
+{
+    <p class="text-muted">Loading settings...</p>
+}
+else if (_loadFailed)
+{
+    <div class="alert alert-warning">
+        <strong>Could not load settings.</strong>
+        Start <code>Admin.Api</code> on port 5006 and ensure the Gateway on port 5000 is running.
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="small mt-2 mb-0">@_errorMessage</div>
+        }
+    </div>
+}
+else if (_settings is not null)
+{
+    <dl class="row">
+        <dt class="col-sm-4">Tenant</dt><dd class="col-sm-8">@_settings.TenantId</dd>
+        <dt class="col-sm-4">Chunking Strategy</dt><dd class="col-sm-8">@_settings.DefaultChunkingStrategy</dd>
+        <dt class="col-sm-4">Chunk Size</dt><dd class="col-sm-8">@_settings.FixedChunkSize</dd>
+        <dt class="col-sm-4">Chunk Overlap</dt><dd class="col-sm-8">@_settings.FixedChunkOverlap</dd>
+        <dt class="col-sm-4">Retrieval Top-K</dt><dd class="col-sm-8">@_settings.RetrievalTopK</dd>
+        <dt class="col-sm-4">Chat Model</dt><dd class="col-sm-8">@_settings.ChatModel</dd>
+        <dt class="col-sm-4">Embedding Model</dt><dd class="col-sm-8">@_settings.EmbeddingModel</dd>
+        <dt class="col-sm-4">Multi-Agent</dt><dd class="col-sm-8">@(_settings.UseMultiAgent ? "Enabled" : "Disabled")</dd>
+        <dt class="col-sm-4">Daily Token Budget</dt><dd class="col-sm-8">@_settings.DailyTokenBudget.ToString("N0")</dd>
+    </dl>
+}
+
+@code {
+    private TenantSettingsDto? _settings;
+    private bool _loading = true;
+    private bool _loadFailed;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _settings = await Api.GetSettingsAsync();
+            _loadFailed = false;
+        }
+        catch (Exception ex)
+        {
+            _loadFailed = true;
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

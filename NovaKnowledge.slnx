@@ -1,0 +1,39 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/NovaKnowledge.Gateway/NovaKnowledge.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Admin/">
+    <Project Path="src/Services/Admin/NovaKnowledge.Admin.Api/NovaKnowledge.Admin.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Chat/">
+    <Project Path="src/Services/Chat/NovaKnowledge.Chat.Api/NovaKnowledge.Chat.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Feedback/">
+    <Project Path="src/Services/Feedback/NovaKnowledge.Feedback.Api/NovaKnowledge.Feedback.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Ingestion/">
+    <Project Path="src/Services/Ingestion/NovaKnowledge.Ingestion.Api/NovaKnowledge.Ingestion.Api.csproj" />
+    <Project Path="src/Services/Ingestion/NovaKnowledge.Ingestion.Worker/NovaKnowledge.Ingestion.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Orchestration/">
+    <Project Path="src/Services/Orchestration/NovaKnowledge.Orchestration.Api/NovaKnowledge.Orchestration.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Search/">
+    <Project Path="src/Services/Search/NovaKnowledge.Search.Api/NovaKnowledge.Search.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/NovaKnowledge.Application/NovaKnowledge.Application.csproj" />
+    <Project Path="src/Shared/NovaKnowledge.Contracts/NovaKnowledge.Contracts.csproj" />
+    <Project Path="src/Shared/NovaKnowledge.Domain/NovaKnowledge.Domain.csproj" />
+    <Project Path="src/Shared/NovaKnowledge.Infrastructure/NovaKnowledge.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Web/">
+    <Project Path="src/Web/NovaKnowledge.Admin.Web/NovaKnowledge.Admin.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NovaKnowledge.IntegrationTests/NovaKnowledge.IntegrationTests.csproj" />
+    <Project Path="tests/NovaKnowledge.UnitTests/NovaKnowledge.UnitTests.csproj" />
+  </Folder>
+</Solution>

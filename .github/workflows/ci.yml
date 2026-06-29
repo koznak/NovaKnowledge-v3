@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore NovaKnowledge.sln
+
+      - name: Build
+        run: dotnet build NovaKnowledge.sln --configuration Release --no-restore
+
+      - name: Unit Tests
+        run: dotnet test tests/NovaKnowledge.UnitTests/NovaKnowledge.UnitTests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Python Evaluation Service Tests
+        run: |
+          pip install -r python/evaluation-service/requirements.txt
+          python -c "from python.evaluation-service.main import compute_rag_metrics; print(compute_rag_metrics([{'context':'pto 20 days','expected_answer':'20 days','question':'pto'}]))" || \
+          python -c "import sys; sys.path.insert(0,'python/evaluation-service'); from main import compute_rag_metrics; assert compute_rag_metrics([{'context':'pto 20 days','expected_answer':'20 days','question':'pto'}])['faithfulness'] > 0"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        service:
+          - gateway
+          - chat-api
+          - orchestration-api
+          - ingestion-api
+          - search-api
+          - feedback-api
+          - admin-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f docker/Dockerfile.${{ matrix.service }} -t novaknowledge/${{ matrix.service }}:latest .
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.ref == 'refs/heads/main'
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Bicep (dev)
+        run: |
+          az deployment sub create \
+            --location eastus2 \
+            --template-file infra/bicep/main.bicep \
+            --parameters infra/parameters/dev.bicepparam
