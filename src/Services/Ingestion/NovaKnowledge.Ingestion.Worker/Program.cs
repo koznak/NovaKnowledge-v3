@@ -1,5 +1,6 @@
-using NovaKnowledge.Ingestion.Worker;
 using NovaKnowledge.Infrastructure;
+using NovaKnowledge.Infrastructure.Ingestion;
+using NovaKnowledge.Ingestion.Worker;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
