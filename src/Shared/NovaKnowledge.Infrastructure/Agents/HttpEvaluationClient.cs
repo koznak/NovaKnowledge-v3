@@ -54,8 +54,48 @@ public sealed class HttpEvaluationClient : IEvaluationClient
     {
         var run = await _repository.GetByIdAsync(runId, cancellationToken);
         if (run == null) return null;
+
+        // While a run is in flight, poll the evaluation service and persist the scores once complete.
+        if (run.Status is Domain.Entities.EvaluationStatus.Running or Domain.Entities.EvaluationStatus.Pending)
+        {
+            await TryRefreshFromServiceAsync(run, cancellationToken);
+        }
+
         return new EvaluationRunDto(
             run.Id, run.Status.ToString(), run.FaithfulnessScore, run.AnswerRelevanceScore,
             run.ContextPrecisionScore, run.ContextRecallScore, run.CreatedAt, run.CompletedAt, run.ErrorMessage);
     }
+
+    private async Task TryRefreshFromServiceAsync(Domain.Entities.EvaluationRun run, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var metrics = await _http.GetFromJsonAsync<EvaluationMetricsResponse>($"/metrics/{run.Id}", cancellationToken);
+            if (metrics is null || !string.Equals(metrics.Status, "completed", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            run.Status = Domain.Entities.EvaluationStatus.Completed;
+            run.FaithfulnessScore = metrics.Faithfulness;
+            run.AnswerRelevanceScore = metrics.AnswerRelevance;
+            run.ContextPrecisionScore = metrics.ContextPrecision;
+            run.ContextRecallScore = metrics.ContextRecall;
+            run.CompletedAt = DateTimeOffset.UtcNow;
+
+            await _repository.UpdateAsync(run, cancellationToken);
+            await _repository.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Persisted evaluation scores for run {RunId}", run.Id);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or NotSupportedException)
+        {
+            // The run is still in progress or the service is unreachable; the next poll retries.
+            _logger.LogDebug(ex, "Evaluation run {RunId} metrics not yet available", run.Id);
+        }
+    }
+
+    private sealed record EvaluationMetricsResponse(
+        string Status,
+        double Faithfulness,
+        double AnswerRelevance,
+        double ContextPrecision,
+        double ContextRecall);
 }
