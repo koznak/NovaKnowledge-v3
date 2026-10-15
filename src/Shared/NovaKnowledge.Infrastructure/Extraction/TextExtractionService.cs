@@ -10,13 +10,19 @@ public class TextExtractionService(ILogger<TextExtractionService> logger) : ITex
 {
     public async Task<string> ExtractTextAsync(Stream stream, string contentType, CancellationToken cancellationToken = default)
     {
-        return contentType.ToLowerInvariant() switch
+        var normalizedContentType = contentType.ToLowerInvariant();
+        logger.LogDebug("Extracting text for content type {ContentType}", normalizedContentType);
+
+        var text = normalizedContentType switch
         {
             "application/pdf" => ExtractPdf(stream),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ExtractDocx(stream),
             "text/plain" or "text/markdown" => await new StreamReader(stream).ReadToEndAsync(cancellationToken),
             _ => throw new NotSupportedException($"Content type not supported: {contentType}")
         };
+
+        logger.LogDebug("Extracted {CharacterCount} characters for content type {ContentType}", text.Length, normalizedContentType);
+        return text;
     }
 
     private string ExtractPdf(Stream stream)

@@ -42,6 +42,8 @@
     <PackageReference Include="Serilog.Enrichers.Thread" />
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="StackExchange.Redis" />
+    <!-- Dependency override: transitive Pkcs 9.0.0 has known advisories (GHSA-846f-f764-76mx). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
 </Project>
