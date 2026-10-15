@@ -16,6 +16,7 @@
 # Usage:
 #   .\scripts\scrub-history.ps1                          # scrub + verify only (no push)
 #   .\scripts\scrub-history.ps1 -NewRepo koznak/NovaKnowledge-v2
+#   .\scripts\scrub-history.ps1 -NewRepo koznak/NovaKnowledge-v2 -Visibility public
 #   .\scripts\scrub-history.ps1 -Source <path>           # scrub a different local repo
 #   .\scripts\scrub-history.ps1 -OutDir <path>           # choose the output location
 
@@ -24,6 +25,8 @@ param(
     [string]$OutDir,
     [string]$MapFile,
     [string]$NewRepo,
+    [ValidateSet("private", "public")]
+    [string]$Visibility = "private",
     [string[]]$RemovePath = @(
         "docs/redacted-company-interview-brief.md",
         "docs/redacted-company-interview-brief.pdf"
@@ -139,18 +142,27 @@ try {
         }
 
         # Create the repo empty (no README/license) and wire it as 'origin' in the cleaned clone.
-        gh repo create $NewRepo --private --source "$OutDir" --remote origin
+        # Defaults to private so you can inspect the cleaned history before exposing it; pass
+        # -Visibility public to publish in one step.
+        gh repo create $NewRepo "--$Visibility" --source "$OutDir" --remote origin
         if ($LASTEXITCODE -ne 0) { throw "gh repo create failed. Does '$NewRepo' already exist?" }
 
         git push -u origin main
         if ($LASTEXITCODE -ne 0) { throw "git push to '$NewRepo' failed." }
 
-        Write-Host @"
-
-The cleaned history is now in '$NewRepo' (private, no secrets).
+        $flipNote = if ($Visibility -eq "private") {
+@"
   - Verify one old commit has no secrets, then flip public:
       gh repo edit $NewRepo --visibility public --accept-visibility-change-consequences
-  - Archive or delete the OLD contaminated repo:
+"@
+        } else {
+            "  - The repo is public. Double-check an old commit for leaks."
+        }
+
+        Write-Host @"
+
+The cleaned history is now in '$NewRepo' ($Visibility, no secrets).
+$flipNote  - Archive or delete the OLD contaminated repo:
       gh repo archive <old-owner>/<old-repo>
 "@ -ForegroundColor Green
     }

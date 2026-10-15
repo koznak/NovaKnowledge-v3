@@ -115,7 +115,9 @@ about, and no force-push is needed.
 .\scripts\scrub-history.ps1 -NewRepo <owner>/<new-repo>
 ```
 
-This creates a new **private** repo and pushes the cleaned history to it. Or do it manually:
+This creates a new **private** repo and pushes the cleaned history to it. Push it public directly
+with `-Visibility public` (only do this once you're confident the scrub is complete). Or do it
+manually:
 
 ```bash
 cd <scrubbed-clone-dir>
