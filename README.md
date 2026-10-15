@@ -100,7 +100,7 @@ Databases and seed data are created automatically on service startup.
 Committed `appsettings.json` files contain **placeholders**. Supply real values with user-secrets:
 
 ```bash
-cd src/Services/Search/NovaKnowledge.Search.Api
+cd src/Gateway/NovaKnowledge.Gateway
 dotnet user-secrets set "AzureSearch:Endpoint" "https://<your-search>.search.windows.net"
 dotnet user-secrets set "AzureSearch:ApiKey" "<key>"
 dotnet user-secrets set "AzureOpenAI:Endpoint" "https://<your-chat>.openai.azure.com/"
@@ -109,7 +109,8 @@ dotnet user-secrets set "AzureOpenAI:EmbeddingEndpoint" "https://<your-embed>.op
 dotnet user-secrets set "AzureOpenAI:EmbeddingApiKey" "<key>"
 ```
 
-Repeat for each service that needs the credential, or use an ignored
+All projects share one user-secrets store (`novaknowledge-local-development`), so you set these
+**once** from any project and every service picks them up. Alternatively, use an ignored
 `appsettings.<Service>.local.json` override. See [SECURITY.md](SECURITY.md).
 
 ### 3. Run the services
@@ -142,10 +143,10 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## Running without Azure (keyword-only mode)
+## Running without Azure OpenAI (keyword-only mode)
 
-You do **not** need Azure OpenAI to exercise retrieval. Keyword-only mode disables query
-embeddings and uses Azure AI Search BM25 + semantic ranker:
+You do **not** need Azure OpenAI *embeddings* to exercise retrieval. Keyword-only mode disables
+query embeddings and relies on Azure AI Search BM25 + semantic ranker:
 
 ```jsonc
 // appsettings.json (default in this repo)
@@ -158,9 +159,10 @@ Per-request override:
 { "query": "PTO policy", "tenantId": "contoso", "topK": 5, "useHybrid": false }
 ```
 
-**Trade-off:** no vector similarity, so recall on paraphrased/acronym queries is lower. Chat still
-requires a chat model deployment. Set `EnableHybridSearch` back to `true` after you deploy an
-embedding model (`text-embedding-3-large`, 3072 dims; use `1536` for `3-small`/`ada-002`).
+**Trade-off:** no vector similarity, so recall on paraphrased/acronym queries is lower.
+
+> **Still required:** an Azure AI Search resource (there is no local search emulator), and a chat
+> model deployment for `/api/chat`. Keyword-only mode only removes the *embedding* dependency.
 
 ---
 

@@ -8,6 +8,12 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
+    <!--
+      A single shared user-secrets store for local development. Every project reads the same
+      configuration keys (AzureOpenAI, AzureSearch, ...), so one `dotnet user-secrets set`
+      applies to all services and keeps real credentials out of the repository.
+    -->
+    <UserSecretsId>novaknowledge-local-development</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
