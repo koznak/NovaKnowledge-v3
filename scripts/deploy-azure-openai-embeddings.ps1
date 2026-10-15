@@ -1,10 +1,15 @@
 # Deploy text-embedding-3-large to Azure OpenAI (Option A).
 # Prereq: az login
-# Usage: .\scripts\deploy-azure-openai-embeddings.ps1
+# Usage: .\scripts\deploy-azure-openai-embeddings.ps1 -OpenAiAccount <your-openai-resource-name>
+
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$OpenAiAccount
+)
 
 $ErrorActionPreference = "Stop"
 
-$openAiAccount = "YOUR-CHAT-RESOURCE"
+$openAiAccount = $OpenAiAccount
 $deploymentName = "text-embedding-3-large"
 $modelName = "text-embedding-3-large"
 $modelVersion = "1"

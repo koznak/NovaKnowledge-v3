@@ -1,0 +1,25 @@
+# gitleaks configuration for NovaKnowledge
+# Docs: https://github.com/gitleaks/gitleaks
+#
+# Runs in CI (.github/workflows/ci.yml) to prevent secrets from being committed.
+
+title = "NovaKnowledge"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-safe placeholders and local development values"
+# Local development defaults that are intentionally committed (not real secrets).
+paths = [
+    '''appsettings\.template\.json''',
+    '''appsettings\.shared\.json''',
+]
+regexes = [
+    # Placeholder endpoints documented in the README / config templates.
+    '''YOUR-[A-Z-]+-RESOURCE''',
+    # Local docker-compose / emulator credentials.
+    '''YourStrong@Passw0rd''',
+    '''Password=postgres''',
+    '''SharedAccessKey=SAS_KEY_VALUE''',
+]

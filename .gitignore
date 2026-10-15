@@ -13,11 +13,15 @@ obj/
 !.vscode/tasks.json
 
 ## Secrets
+# Committed appsettings.json files must contain placeholders only.
+# Put real keys in user-secrets (dotnet user-secrets) or an ignored local override.
 appsettings.Development.local.json
+appsettings.*.local.json
 appsettings.local.json
 *.pfx
 .env
 .env.*
+secrets.txt
 
 ## Python
 __pycache__/
