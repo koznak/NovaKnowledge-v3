@@ -58,16 +58,36 @@ literal:<actual-company>==>REDACTED_COMPANY
 > Order matters only in that longer strings should come first (e.g. the full email before the
 > name part), because `replace-text` applies rules in file order.
 
+> **Include truncated forms too.** Any place that showed a key *prefix* (for example a shortened
+> fragment in old documentation or a verification command) must have its own rule, otherwise the
+> fragment survives the scrub. `scripts/scrub-history.ps1` verifies every literal you list, so add
+> fragments until the verification passes.
+
 ## 3. Rewrite history
+
+The repository ships `scripts/scrub-history.ps1`, which automates steps 3–4 safely (it works on a
+throwaway clone and never touches your working tree or the remote):
+
+```powershell
+.\scripts\scrub-history.ps1
+```
+
+It clones to a temp folder, removes the personal brief files, runs `git filter-repo --replace-text`,
+and then **fails loudly** if any scrubbed literal survives in any commit. On success it prints the
+exact push commands.
+
+Equivalent manual steps:
 
 ```bash
 pip install git-filter-repo
+git filter-repo --path docs/redacted-company-interview-brief.md --path docs/redacted-company-interview-brief.pdf --invert-paths
 git filter-repo --replace-text secrets.txt
 ```
 
-This removes the personal brief files from history too (they only ever contained the redacted
-strings, so after replacement they are gone). `git-filter-repo` intentionally **removes the
-`origin` remote** as a safety measure.
+> `--replace-text` cannot alter binary files (the PDF) or file names, which is why the personal brief
+> files are removed with `--invert-paths` first. The script does both passes.
+
+`git-filter-repo` intentionally **removes the `origin` remote** as a safety measure.
 
 ## 4. Verify before pushing
 
@@ -99,7 +119,15 @@ git push --force --tags origin
 ## Run it yourself
 
 I (the assistant) do **not** run history rewrites or force-pushes. The steps are destructive and
-must be run by you, ideally on a fresh clone:
+must be run by you:
+
+```powershell
+# Rotate keys in Azure first, then:
+.\scripts\scrub-history.ps1           # clones, scrubs, verifies (no push)
+# follow the push commands it prints
+```
+
+Or manually on a fresh clone:
 
 ```bash
 git clone https://github.com/koznak/NovaKnowledge.git nk-scrub && cd nk-scrub
