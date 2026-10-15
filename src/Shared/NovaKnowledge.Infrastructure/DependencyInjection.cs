@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel;
 using NovaKnowledge.Application.Chunking;
 using NovaKnowledge.Application.Interfaces;
 using NovaKnowledge.Infrastructure.Agents;
@@ -103,8 +104,20 @@ public static class DependencyInjection
         services.AddScoped<ITextExtractionService, TextExtractionService>();
         services.AddScoped<IChunkingService, RecursiveChunkingService>();
         services.AddScoped<DocumentProcessor>();
-        services.AddScoped<IAgentOrchestrator, SemanticKernelAgentOrchestrator>();
         services.AddScoped<IPromptTemplateService, PromptTemplateService>();
+
+        // Semantic Kernel: a single shared Kernel wired to the configured chat deployment.
+        services.AddScoped(sp =>
+        {
+            var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AzureOpenAIOptions>>().Value;
+            var builder = Kernel.CreateBuilder();
+            builder.AddAzureOpenAIChatCompletion(
+                deploymentName: opts.ChatDeployment,
+                azureOpenAIClient: AzureClientFactory.CreateOpenAIClient(opts));
+            return builder.Build();
+        });
+
+        services.AddScoped<IAgentOrchestrator, AgentOrchestrator>();
 
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IConversationRepository, ConversationRepository>();
