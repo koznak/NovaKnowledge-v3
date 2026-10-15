@@ -34,9 +34,22 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install evaluation service dependencies
+        run: pip install -r python/evaluation-service/requirements.txt
+
       - name: Python Evaluation Service Tests
-        run: |
-          pip install -r python/evaluation-service/requirements.txt
-          python -c "from python.evaluation-service.main import compute_rag_metrics; print(compute_rag_metrics([{'context':'pto 20 days','expected_answer':'20 days','question':'pto'}]))" || \
-          python -c "import sys; sys.path.insert(0,'python/evaluation-service'); from main import compute_rag_metrics; assert compute_rag_metrics([{'context':'pto 20 days','expected_answer':'20 days','question':'pto'}])['faithfulness'] > 0"
+        run: pytest python/evaluation-service -q
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

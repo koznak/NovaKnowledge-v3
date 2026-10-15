@@ -3,3 +3,13 @@
 fastapi>=0.115.6,<1.0
 uvicorn[standard]>=0.34.0,<1.0
 pydantic>=2.10.4,<3.0
+
+# Real Ragas evaluation (LLM judge). Installed in CI and used when AZURE_OPENAI_* are set.
+# If these cannot be installed, the service falls back to the labeled "offline" engine.
+ragas>=0.2.6,<0.3
+langchain-openai>=0.3.0,<1.0
+pandas>=2.2,<3.0
+
+# Tests
+pytest>=8.3,<9.0
+httpx>=0.28,<1.0
