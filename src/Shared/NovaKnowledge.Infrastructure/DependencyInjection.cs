@@ -183,7 +183,12 @@ public static class DependencyInjection
 
     public static WebApplication MapNovaKnowledgeHealthChecks(this WebApplication app)
     {
-        app.MapHealthChecks("/health");
+        // Liveness: process is up. Does not depend on external services.
+        app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+        {
+            Predicate = check => check.Name == "self"
+        });
+        // Readiness: external dependencies (database, Azure AI Search) are reachable.
         app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("ready")

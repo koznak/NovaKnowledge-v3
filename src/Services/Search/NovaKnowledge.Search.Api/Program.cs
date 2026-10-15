@@ -19,3 +19,6 @@ app.UseSerilogRequestLogging();
 app.MapControllers();
 app.MapNovaKnowledgeHealthChecks();
 app.Run();
+
+/// <summary>Exposed so integration tests can target the real composition root.</summary>
+public partial class Program;

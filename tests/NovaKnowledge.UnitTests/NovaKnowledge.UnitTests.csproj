@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Shared\NovaKnowledge.Application\NovaKnowledge.Application.csproj" />
     <ProjectReference Include="..\..\src\Shared\NovaKnowledge.Domain\NovaKnowledge.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Shared\NovaKnowledge.Infrastructure\NovaKnowledge.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
