@@ -1,7 +1,7 @@
 # NovaKnowledge evaluation service (Python 3.11+)
 # Prefer an isolated venv: python -m venv .venv && .venv\Scripts\activate
 fastapi>=0.115.6,<1.0
-uvicorn[standard]>=0.34.0,<1.0
+uvicorn[standard]>=0.54.0,<1.0
 pydantic>=2.10.4,<3.0
 
 # Real Ragas evaluation (LLM judge). Installed in CI and used when AZURE_OPENAI_* are set.
