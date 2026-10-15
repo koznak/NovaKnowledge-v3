@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <style>
+      .title { fill:#e2e8f0; font-size:24px; font-weight:600; }
+      .sub   { fill:#94a3b8; font-size:13px; }
+      .box   { fill:#111c30; stroke:#2b3b57; stroke-width:1.4; rx:10; }
+      .boxA  { fill:#12233d; stroke:#3b82f6; stroke-width:1.4; rx:10; }
+      .boxB  { fill:#132a24; stroke:#10b981; stroke-width:1.4; rx:10; }
+      .boxC  { fill:#2a2233; stroke:#a855f7; stroke-width:1.4; rx:10; }
+      .lbl   { fill:#e2e8f0; font-size:13px; font-weight:600; }
+      .lbl2  { fill:#94a3b8; font-size:11px; }
+      .port  { fill:#64748b; font-size:10px; }
+      .flow  { stroke:#475569; stroke-width:1.6; fill:none; marker-end:url(#arrow); }
+      .flowA { stroke:#3b82f6; stroke-width:1.6; fill:none; marker-end:url(#arrowA); }
+      .flowB { stroke:#10b981; stroke-width:1.6; fill:none; marker-end:url(#arrowB); }
+    </style>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowA" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrowB" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="760" fill="url(#bg)"/>
+  <text x="40" y="52" class="title">NovaKnowledge  system architecture</text>
+  <text x="40" y="74" class="sub">.NET 10 microservices · hybrid RAG retrieval · Semantic Kernel agent orchestration · Python RAGAS evaluation</text>
+
+  <!-- Clients -->
+  <rect x="40" y="110" width="220" height="92" class="box"/>
+  <text x="60" y="140" class="lbl">Clients</text>
+  <text x="60" y="162" class="lbl2">Blazor Admin UI · REST · Copilot Studio</text>
+  <text x="60" y="182" class="lbl2">(demo runs without authentication)</text>
+
+  <!-- Gateway -->
+  <rect x="330" y="118" width="180" height="76" class="boxA"/>
+  <text x="350" y="148" class="lbl">YARP Gateway</text>
+  <text x="350" y="170" class="lbl2">single entry point</text>
+  <text x="350" y="188" class="port">:5000</text>
+
+  <!-- Query services -->
+  <rect x="580" y="110" width="250" height="46" class="boxA"/>
+  <text x="598" y="132" class="lbl">Chat.Api</text><text x="760" y="132" class="port">:5001</text>
+  <text x="598" y="149" class="lbl2">sessions · SSE cited answers · traces</text>
+
+  <rect x="580" y="164" width="250" height="46" class="boxA"/>
+  <text x="598" y="186" class="lbl">Search.Api</text><text x="760" y="186" class="port">:5003</text>
+  <text x="598" y="203" class="lbl2">hybrid vector + BM25 + semantic ranker</text>
+
+  <rect x="580" y="218" width="250" height="46" class="boxA"/>
+  <text x="598" y="240" class="lbl">Orchestration.Api</text><text x="760" y="240" class="port">:5002</text>
+  <text x="598" y="257" class="lbl2">Router ’ Research ’ Synthesis ’ Compliance</text>
+
+  <rect x="580" y="272" width="250" height="46" class="boxA"/>
+  <text x="598" y="294" class="lbl">Ingestion.Api</text><text x="760" y="294" class="port">:5004</text>
+  <text x="598" y="311" class="lbl2">upload · dedup · queue publish</text>
+
+  <rect x="580" y="326" width="250" height="46" class="boxA"/>
+  <text x="598" y="348" class="lbl">Feedback.Api</text><text x="760" y="348" class="port">:5005</text>
+  <text x="598" y="365" class="lbl2">ratings · JSONL export</text>
+
+  <rect x="580" y="380" width="250" height="46" class="boxA"/>
+  <text x="598" y="402" class="lbl">Admin.Api</text><text x="760" y="402" class="port">:5006</text>
+  <text x="598" y="419" class="lbl2">prompts · settings · metrics · eval trigger</text>
+
+  <!-- AI platform -->
+  <rect x="900" y="110" width="240" height="120" class="boxC"/>
+  <text x="920" y="140" class="lbl">Azure OpenAI</text>
+  <text x="920" y="162" class="lbl2">chat completions (gpt)</text>
+  <text x="920" y="180" class="lbl2">embeddings (3-large, 3072d)</text>
+  <text x="920" y="204" class="lbl2">Semantic Kernel agents</text>
+  <text x="920" y="222" class="lbl2">token usage captured per step</text>
+
+  <rect x="900" y="246" width="240" height="96" class="boxC"/>
+  <text x="920" y="276" class="lbl">Azure AI Search</text>
+  <text x="920" y="298" class="lbl2">vector field + BM25</text>
+  <text x="920" y="316" class="lbl2">semantic configuration</text>
+  <text x="920" y="334" class="lbl2">tenant/department/docType filters</text>
+
+  <!-- Ingestion worker -->
+  <rect x="580" y="446" width="250" height="66" class="boxB"/>
+  <text x="598" y="472" class="lbl">Ingestion.Worker</text>
+  <text x="598" y="490" class="lbl2">Service Bus consumer</text>
+  <text x="598" y="507" class="lbl2">extract ’ chunk ’ embed ’ index</text>
+
+  <!-- Data & infra -->
+  <rect x="580" y="530" width="560" height="70" class="box"/>
+  <text x="598" y="556" class="lbl">Infrastructure</text>
+  <text x="598" y="578" class="lbl2">PostgreSQL (EF Core 10) · Redis cache · Azurite blobs · Service Bus emulator</text>
+
+  <!-- Eval -->
+  <rect x="580" y="620" width="250" height="76" class="boxB"/>
+  <text x="598" y="646" class="lbl">Evaluation Service</text><text x="760" y="646" class="port">:8000</text>
+  <text x="598" y="666" class="lbl2">RAGAS metrics (LLM judge)</text>
+  <text x="598" y="684" class="lbl2">offline fallback, explicitly labeled</text>
+
+  <!-- Observability -->
+  <rect x="900" y="620" width="240" height="76" class="box"/>
+  <text x="920" y="646" class="lbl">Observability</text>
+  <text x="920" y="666" class="lbl2">OpenTelemetry traces + metrics</text>
+  <text x="920" y="684" class="lbl2">Serilog · Polly retry/circuit breaker</text>
+
+  <!-- flows -->
+  <path class="flow" d="M260,156 L326,156"/>
+  <path class="flowA" d="M510,150 L576,140"/>
+  <path class="flowA" d="M510,162 L576,186"/>
+  <path class="flowA" d="M510,170 L576,240"/>
+  <path class="flowA" d="M510,178 L576,292"/>
+  <path class="flowA" d="M830,133 L896,150"/>
+  <path class="flowA" d="M830,187 L896,270"/>
+  <path class="flowB" d="M700,272 L700,442"/>
+  <path class="flowB" d="M830,479 L896,300"/>
+  <path class="flow" d="M700,512 L700,526"/>
+  <path class="flowB" d="M700,600 L700,616"/>
+  <path class="flowA" d="M700,406 L700,442"/>
+</svg>
