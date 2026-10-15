@@ -1,6 +1,9 @@
 # NovaKnowledge — Architecture Diagrams
 
-Production enterprise knowledge copilot for **Contoso Corp**. All external traffic enters through the YARP gateway; microservices share PostgreSQL, Redis, and Azure AI services.
+Enterprise knowledge copilot for **Contoso Corp** (demo tenant). All external traffic enters through the YARP gateway; microservices share PostgreSQL, Redis, and Azure AI services.
+
+> **Scope:** single-tenant demo, no authentication. `tenantId` is a configuration/request default,
+> not an authenticated identity. See the README "Scope & Limitations" section.
 
 ---
 
@@ -208,17 +211,21 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    Input["User message"] --> Router["RouterAgent\nIntent classify"]
-    Router -->|"policy_qa"| Research["ResearchAgent\nRetrieve chunks"]
+    Input["User message"] --> Router["RouterAgent (SK)\nIntent classify"]
+    Router -->|"policy_qa"| Research["ResearchAgent\nDeterministic context formatting"]
     Router -->|"out_of_scope"| OOS["Decline gracefully"]
-    Research --> Synthesis["SynthesisAgent\nCited answer"]
-    Synthesis --> Compliance["ComplianceAgent\nDisclaimer · PII check"]
+    Research --> Synthesis["SynthesisAgent (SK)\nCited answer"]
+    Synthesis --> Compliance["ComplianceAgent (SK)\nDisclaimer · no invented policy"]
     Compliance --> Output["Final response"]
     Router --> Trace["AgentRun trace\nPostgreSQL"]
     Research --> Trace
     Synthesis --> Trace
     Compliance --> Trace
 ```
+
+Router, Synthesis, and Compliance are Microsoft Semantic Kernel `ChatCompletionAgent`s bound to a
+shared `Kernel`; Research is intentionally a deterministic step (no model call). Each step's token
+usage and duration are recorded via SK response metadata and linked to the assistant message id.
 
 Toggle single-agent vs multi-agent via **Admin → Tenant Settings** (`UseMultiAgent`).
 

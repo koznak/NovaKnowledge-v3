@@ -48,11 +48,13 @@ Show:
 **Talking point:** Hybrid search beat vector-only on acronyms like PTO.
 
 ## Act 4: Multi-Agent Orchestration (3 min)
-Explain agent chain:
-1. **RouterAgent** — classifies intent
-2. **ResearchAgent** — retrieves chunks
-3. **SynthesisAgent** — generates cited answer
-4. **ComplianceAgent** — adds disclaimer
+Explain the Semantic Kernel agent chain:
+1. **RouterAgent** (SK `ChatCompletionAgent`) — classifies intent
+2. **ResearchAgent** — deterministic formatting of retrieved chunks (no LLM call, by design)
+3. **SynthesisAgent** (SK `ChatCompletionAgent`) — generates the cited answer
+4. **ComplianceAgent** (SK `ChatCompletionAgent`) — checks for invented policy + adds disclaimer
+
+Each step's token usage and latency are persisted as `AgentRun` trace rows linked to the answer.
 
 Call orchestration directly:
 ```bash
