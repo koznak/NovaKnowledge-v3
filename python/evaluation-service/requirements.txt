@@ -1,6 +1,6 @@
 # NovaKnowledge evaluation service (Python 3.11+)
 # Prefer an isolated venv: python -m venv .venv && .venv\Scripts\activate
-fastapi>=0.115.6,<1.0
+fastapi>=0.143.0,<1.0
 uvicorn[standard]>=0.34.0,<1.0
 pydantic>=2.10.4,<3.0
 
