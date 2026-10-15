@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
@@ -30,13 +31,13 @@
   </defs>
 
   <rect width="1180" height="760" fill="url(#bg)"/>
-  <text x="40" y="52" class="title">NovaKnowledge  system architecture</text>
-  <text x="40" y="74" class="sub">.NET 10 microservices · hybrid RAG retrieval · Semantic Kernel agent orchestration · Python RAGAS evaluation</text>
+  <text x="40" y="52" class="title">NovaKnowledge â€” system architecture</text>
+  <text x="40" y="74" class="sub">.NET 10 microservices Â· hybrid RAG retrieval Â· Semantic Kernel agent orchestration Â· Python RAGAS evaluation</text>
 
   <!-- Clients -->
   <rect x="40" y="110" width="220" height="92" class="box"/>
   <text x="60" y="140" class="lbl">Clients</text>
-  <text x="60" y="162" class="lbl2">Blazor Admin UI · REST · Copilot Studio</text>
+  <text x="60" y="162" class="lbl2">Blazor Admin UI Â· REST Â· Copilot Studio</text>
   <text x="60" y="182" class="lbl2">(demo runs without authentication)</text>
 
   <!-- Gateway -->
@@ -48,7 +49,7 @@
   <!-- Query services -->
   <rect x="580" y="110" width="250" height="46" class="boxA"/>
   <text x="598" y="132" class="lbl">Chat.Api</text><text x="760" y="132" class="port">:5001</text>
-  <text x="598" y="149" class="lbl2">sessions · SSE cited answers · traces</text>
+  <text x="598" y="149" class="lbl2">sessions Â· SSE cited answers Â· traces</text>
 
   <rect x="580" y="164" width="250" height="46" class="boxA"/>
   <text x="598" y="186" class="lbl">Search.Api</text><text x="760" y="186" class="port">:5003</text>
@@ -56,19 +57,19 @@
 
   <rect x="580" y="218" width="250" height="46" class="boxA"/>
   <text x="598" y="240" class="lbl">Orchestration.Api</text><text x="760" y="240" class="port">:5002</text>
-  <text x="598" y="257" class="lbl2">Router ’ Research ’ Synthesis ’ Compliance</text>
+  <text x="598" y="257" class="lbl2">Router â†’ Research â†’ Synthesis â†’ Compliance</text>
 
   <rect x="580" y="272" width="250" height="46" class="boxA"/>
   <text x="598" y="294" class="lbl">Ingestion.Api</text><text x="760" y="294" class="port">:5004</text>
-  <text x="598" y="311" class="lbl2">upload · dedup · queue publish</text>
+  <text x="598" y="311" class="lbl2">upload Â· dedup Â· queue publish</text>
 
   <rect x="580" y="326" width="250" height="46" class="boxA"/>
   <text x="598" y="348" class="lbl">Feedback.Api</text><text x="760" y="348" class="port">:5005</text>
-  <text x="598" y="365" class="lbl2">ratings · JSONL export</text>
+  <text x="598" y="365" class="lbl2">ratings Â· JSONL export</text>
 
   <rect x="580" y="380" width="250" height="46" class="boxA"/>
   <text x="598" y="402" class="lbl">Admin.Api</text><text x="760" y="402" class="port">:5006</text>
-  <text x="598" y="419" class="lbl2">prompts · settings · metrics · eval trigger</text>
+  <text x="598" y="419" class="lbl2">prompts Â· settings Â· metrics Â· eval trigger</text>
 
   <!-- AI platform -->
   <rect x="900" y="110" width="240" height="120" class="boxC"/>
@@ -88,12 +89,12 @@
   <rect x="580" y="446" width="250" height="66" class="boxB"/>
   <text x="598" y="472" class="lbl">Ingestion.Worker</text>
   <text x="598" y="490" class="lbl2">Service Bus consumer</text>
-  <text x="598" y="507" class="lbl2">extract ’ chunk ’ embed ’ index</text>
+  <text x="598" y="507" class="lbl2">extract â†’ chunk â†’ embed â†’ index</text>
 
   <!-- Data & infra -->
   <rect x="580" y="530" width="560" height="70" class="box"/>
   <text x="598" y="556" class="lbl">Infrastructure</text>
-  <text x="598" y="578" class="lbl2">PostgreSQL (EF Core 10) · Redis cache · Azurite blobs · Service Bus emulator</text>
+  <text x="598" y="578" class="lbl2">PostgreSQL (EF Core 10) Â· Redis cache Â· Azurite blobs Â· Service Bus emulator</text>
 
   <!-- Eval -->
   <rect x="580" y="620" width="250" height="76" class="boxB"/>
@@ -105,7 +106,7 @@
   <rect x="900" y="620" width="240" height="76" class="box"/>
   <text x="920" y="646" class="lbl">Observability</text>
   <text x="920" y="666" class="lbl2">OpenTelemetry traces + metrics</text>
-  <text x="920" y="684" class="lbl2">Serilog · Polly retry/circuit breaker</text>
+  <text x="920" y="684" class="lbl2">Serilog Â· Polly retry/circuit breaker</text>
 
   <!-- flows -->
   <path class="flow" d="M260,156 L326,156"/>
