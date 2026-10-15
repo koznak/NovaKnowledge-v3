@@ -112,8 +112,19 @@ the secrets were never sent to the new remote, so there are no dangling/cached o
 about, and no force-push is needed.
 
 ```powershell
-.\scripts\scrub-history.ps1 -NewRepo <owner>/<new-repo>
+.\scripts\scrub-history.ps1 -NewRepo <owner>/<new-repo> -EmailMap email-map.txt
 ```
+
+`-EmailMap` rewrites the commit **author/committer email** (which lives in commit metadata, not file
+content, so `--replace-text` cannot touch it). Create `email-map.txt` (git-ignored) in the standard
+`.mailmap` format:
+
+```
+Your Name <123456+you@users.noreply.github.com> <you@personal-email.com>
+```
+
+Find your noreply address at **GitHub → Settings → Emails → Keep my email addresses private**. The
+script verifies that no old email survives in any author, committer, or diff after the rewrite.
 
 This creates a new **private** repo and pushes the cleaned history to it. Push it public directly
 with `-Visibility public` (only do this once you're confident the scrub is complete). Or do it

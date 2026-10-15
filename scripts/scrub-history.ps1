@@ -17,6 +17,7 @@
 #   .\scripts\scrub-history.ps1                          # scrub + verify only (no push)
 #   .\scripts\scrub-history.ps1 -NewRepo koznak/NovaKnowledge-v2
 #   .\scripts\scrub-history.ps1 -NewRepo koznak/NovaKnowledge-v2 -Visibility public
+#   .\scripts\scrub-history.ps1 -EmailMap email-map.txt  # also rewrite commit author emails
 #   .\scripts\scrub-history.ps1 -Source <path>           # scrub a different local repo
 #   .\scripts\scrub-history.ps1 -OutDir <path>           # choose the output location
 
@@ -24,6 +25,7 @@ param(
     [string]$Source,
     [string]$OutDir,
     [string]$MapFile,
+    [string]$EmailMap,
     [string]$NewRepo,
     [ValidateSet("private", "public")]
     [string]$Visibility = "private",
@@ -38,6 +40,9 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if (-not $Source) { $Source = $repoRoot }
 if (-not $MapFile) { $MapFile = Join-Path $Source "secrets.txt" }
+if ($EmailMap -and -not [System.IO.Path]::IsPathRooted($EmailMap)) {
+    $EmailMap = Join-Path $Source $EmailMap
+}
 if (-not $OutDir) { $OutDir = Join-Path $env:TEMP ("nk-scrub-" + (Get-Date -Format "yyyyMMdd-HHmmss")) }
 
 Write-Host "NovaKnowledge history scrub" -ForegroundColor Cyan
@@ -107,6 +112,19 @@ try {
     git filter-repo --replace-text secrets.txt --force | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "git filter-repo failed." }
 
+    # 3. Rewrite commit author/committer identity (email lives in commit metadata, not file
+    #    content, so --replace-text cannot touch it). A .mailmap rewrites every commit.
+    if ($EmailMap) {
+        if (-not (Test-Path $EmailMap)) { throw "Email map '$EmailMap' not found." }
+        Write-Host "Rewriting commit authors/committers via mailmap..." -ForegroundColor Cyan
+        $mailmapPath = Join-Path $OutDir ".mailmap"
+        Copy-Item $EmailMap $mailmapPath -Force
+        # Exclude .mailmap from history (it contains the old address) and apply the rewrite.
+        git filter-repo --mailmap .mailmap --force | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git filter-repo (mailmap) failed." }
+        Remove-Item $mailmapPath -Force -ErrorAction SilentlyContinue
+    }
+
     # --- Verify ----------------------------------------------------------------------------------
     Write-Host "`nVerifying no scrubbed literal survives in any commit..." -ForegroundColor Cyan
     $revs = git rev-list --all
@@ -119,6 +137,19 @@ try {
     # File-name check for the removed personal brief.
     $nameLeaks = git log --all --name-only --pretty=format: | Select-String -Pattern "interview-brief"
     if ($nameLeaks) { $failures += "<interview-brief file path>" }
+
+    # Commit-metadata check: no old email may remain in any author/committer field.
+    if ($EmailMap) {
+        $oldEmails = @()
+        foreach ($line in (Get-Content $EmailMap)) {
+            $m = [regex]::Match($line, "<(.*?)>\s*<(.*?)>")
+            if ($m.Success) { $oldEmails += $m.Groups[2].Value }
+        }
+        $metaLeaks = git log --all --format="%ae%n%ce" | Where-Object { $_ -and ($oldEmails -contains $_) }
+        if ($metaLeaks) { $failures += "<old email in commit metadata: $($metaLeaks | Select-Object -First 1)>" }
+        $contentLeaks = git log --all -p | Select-String -Pattern ([regex]::Escape($oldEmails[0])) -SimpleMatch
+        if ($contentLeaks) { $failures += "<old email in history diff>" }
+    }
 
     $after = git rev-list --count --all
     Write-Host "`nResult:" -ForegroundColor Cyan
