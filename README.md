@@ -32,7 +32,8 @@ extension** in [docs/copilot-studio-setup.md](docs/copilot-studio-setup.md) — 
 
 ## What this demonstrates
 
-- **Retrieval, not just generation.** Hybrid search (vector + BM25 + semantic ranker) with
+- **Retrieval, not just generation.** Hybrid-capable search (vector + BM25 + semantic ranker;
+  the shipped demo config runs keyword-only until an embedding model is configured) with
   tenant/department/docType filtering, deterministic cache keys, and OData-escaped filters.
 - **Grounding you can verify.** Every answer carries citation DTOs; the prompt forces context-only
   answers, and a compliance agent revises for hallucination and adds a disclaimer.

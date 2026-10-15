@@ -18,8 +18,9 @@ than no answer, so recall on exact terms matters as much as semantic recall.
 
 Use **Azure AI Search hybrid search**: BM25 keyword matching and vector k-NN over the same
 `contentVector` field, fused by the search engine, then re-ranked by the **semantic ranker** with an
-extractive query caption. Hybrid is the default (`EnableHybridSearch: true`), with an explicit
-keyword-only mode (`EnableHybridSearch: false`) so the platform runs without an embedding deployment.
+extractive query caption. Hybrid is the intended production mode (the code default is
+`EnableHybridSearch: true`); the shipped demo `appsettings.json` sets it to `false` (keyword-only) so
+the stack runs without an embedding deployment — see the README "Running without Azure OpenAI".
 
 ## Alternatives considered
 
