@@ -102,7 +102,7 @@ public class DocumentsController : ControllerBase
         await _publisher.PublishDocumentUploadedAsync(new DocumentUploadedEvent(
             document.Id, tenantId, blobPath, hash, strategy.ToString()), cancellationToken);
 
-        return Accepted(new ApiResponse<DocumentResponse>(MapDocument(document),             HttpContext.TraceIdentifier));
+        return Accepted(new ApiResponse<DocumentResponse>(MapDocument(document), HttpContext.TraceIdentifier));
     }
 
     /// <summary>Development-only: process a pending document without Service Bus.</summary>

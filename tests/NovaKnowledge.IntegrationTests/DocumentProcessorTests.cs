@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
 using NovaKnowledge.Application.Interfaces;
 using NovaKnowledge.Contracts.Ingestion;
 using NovaKnowledge.Contracts.Search;
 using NovaKnowledge.Domain.Entities;
 using NovaKnowledge.Infrastructure.Configuration;
 using NovaKnowledge.Infrastructure.Ingestion;
+using NSubstitute;
 
 namespace NovaKnowledge.IntegrationTests;
 

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -7,7 +8,6 @@ using NovaKnowledge.Application.Interfaces;
 using NovaKnowledge.Contracts.Ingestion;
 using NovaKnowledge.Infrastructure.Configuration;
 using NovaKnowledge.Infrastructure.Ingestion;
-using System.Text.Json;
 
 namespace NovaKnowledge.Ingestion.Worker;
 
