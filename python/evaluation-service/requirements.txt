@@ -11,5 +11,5 @@ langchain-openai>=0.3.0,<1.0
 pandas>=2.2,<3.0
 
 # Tests
-pytest>=8.3,<9.0
+pytest>=9.1.1,<10.0
 httpx>=0.28,<1.0
