@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
         services.Configure<ServiceUrlsOptions>(configuration.GetSection(ServiceUrlsOptions.SectionName));
         services.Configure<NovaKnowledgeOptions>(configuration.GetSection(NovaKnowledgeOptions.SectionName));
+        services.Configure<PricingOptions>(configuration.GetSection(PricingOptions.SectionName));
 
         var connectionString = configuration.GetConnectionString("NovaKnowledgeDb")
             ?? "Host=localhost;Port=5432;Database=novaknowledge;Username=postgres;Password=postgres";

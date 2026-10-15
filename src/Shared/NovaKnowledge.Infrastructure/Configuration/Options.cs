@@ -28,6 +28,8 @@ public class AzureSearchOptions
     public string IndexName { get; set; } = "novaknowledge-documents";
     /// <summary>When false, search uses Azure AI Search keyword + semantic ranker only (no Azure OpenAI embeddings).</summary>
     public bool EnableHybridSearch { get; set; } = true;
+    /// <summary>Vector field dimensionality; must match the embedding model (3072 for text-embedding-3-large, 1536 for small/ada-002).</summary>
+    public int VectorDimensions { get; set; } = 3072;
 }
 
 public class AzureStorageOptions
@@ -63,4 +65,17 @@ public class NovaKnowledgeOptions
 {
     public const string SectionName = "NovaKnowledge";
     public string DefaultTenantId { get; set; } = "contoso";
+}
+
+/// <summary>
+/// Approximate per-token pricing used to estimate request cost for the metrics dashboard.
+/// Values are placeholders and should be updated from the current Azure OpenAI price list.
+/// </summary>
+public class PricingOptions
+{
+    public const string SectionName = "Pricing";
+    /// <summary>USD per 1,000 prompt (input) tokens.</summary>
+    public decimal PromptCostPer1KTokens { get; set; } = 0.00015m;
+    /// <summary>USD per 1,000 completion (output) tokens.</summary>
+    public decimal CompletionCostPer1KTokens { get; set; } = 0.0006m;
 }

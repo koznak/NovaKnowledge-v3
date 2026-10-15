@@ -166,29 +166,32 @@ public class UsageMetricsRepository(NovaKnowledgeDbContext db) : IUsageMetricsRe
     public async Task<(long Messages, long Tokens, decimal Cost, double AvgLatency, double AvgRetrieval, double AvgLlm)> GetUsageAsync(
         string tenantId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
     {
-        var messages = await db.Messages
-            .Where(m => m.Conversation.TenantId == tenantId && m.CreatedAt >= from && m.CreatedAt <= to)
-            .ToListAsync(cancellationToken);
+        var query = db.Messages
+            .Where(m => m.Conversation.TenantId == tenantId && m.CreatedAt >= from && m.CreatedAt <= to);
 
-        if (messages.Count == 0)
+        if (!await query.AnyAsync(cancellationToken))
             return (0, 0, 0, 0, 0, 0);
 
-        return (
-            messages.Count,
-            messages.Sum(m => (long)(m.PromptTokens + m.CompletionTokens)),
-            messages.Sum(m => m.EstimatedCostUsd),
-            messages.Average(m => m.TotalLatencyMs),
-            messages.Average(m => m.RetrievalLatencyMs),
-            messages.Average(m => m.LlmLatencyMs));
+        // Aggregate server-side; only scalars cross the wire.
+        var messages = await query.CountAsync(cancellationToken);
+        var tokens = await query.SumAsync(m => (long)(m.PromptTokens + m.CompletionTokens), cancellationToken);
+        var cost = await query.SumAsync(m => m.EstimatedCostUsd, cancellationToken);
+        var avgLatency = await query.AverageAsync(m => (double)m.TotalLatencyMs, cancellationToken);
+        var avgRetrieval = await query.AverageAsync(m => (double)m.RetrievalLatencyMs, cancellationToken);
+        var avgLlm = await query.AverageAsync(m => (double)m.LlmLatencyMs, cancellationToken);
+
+        return (messages, tokens, cost, avgLatency, avgRetrieval, avgLlm);
     }
 
     public async Task<double> GetPositiveFeedbackRateAsync(string tenantId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
     {
-        var feedbacks = await db.Feedbacks
-            .Where(f => f.TenantId == tenantId && f.CreatedAt >= from && f.CreatedAt <= to)
-            .ToListAsync(cancellationToken);
+        var feedbacks = db.Feedbacks
+            .Where(f => f.TenantId == tenantId && f.CreatedAt >= from && f.CreatedAt <= to);
 
-        if (feedbacks.Count == 0) return 0;
-        return feedbacks.Count(f => f.Rating == FeedbackRating.Positive) / (double)feedbacks.Count;
+        var total = await feedbacks.CountAsync(cancellationToken);
+        if (total == 0) return 0;
+
+        var positive = await feedbacks.CountAsync(f => f.Rating == FeedbackRating.Positive, cancellationToken);
+        return positive / (double)total;
     }
 }

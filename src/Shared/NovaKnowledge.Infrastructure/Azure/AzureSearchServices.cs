@@ -11,6 +11,15 @@ using NovaKnowledge.Infrastructure.Configuration;
 
 namespace NovaKnowledge.Infrastructure.Azure;
 
+/// <summary>Helpers for building safe Azure AI Search OData filter expressions.</summary>
+internal static class SearchFilter
+{
+    /// <summary>Escapes a single-quoted OData string literal by doubling embedded quotes.</summary>
+    public static string Literal(string value) => value.Replace("'", "''");
+
+    public static string Eq(string field, string value) => $"{field} eq '{Literal(value)}'";
+}
+
 public class AzureSearchIndexService : ISearchIndexService
 {
     private readonly SearchIndexClient _indexClient;
@@ -49,7 +58,7 @@ public class AzureSearchIndexService : ISearchIndexService
             new SearchField("contentVector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
             {
                 IsSearchable = true,
-                VectorSearchDimensions = 3072,
+                VectorSearchDimensions = _options.VectorDimensions,
                 VectorSearchProfileName = "vector-profile"
             },
             new SimpleField("documentId", SearchFieldDataType.String) { IsFilterable = true, IsFacetable = true },
@@ -113,7 +122,7 @@ public class AzureSearchIndexService : ISearchIndexService
 
     public async Task DeleteByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
-        var filter = $"documentId eq '{documentId}'";
+        var filter = SearchFilter.Eq("documentId", documentId.ToString());
         var results = await _searchClient.SearchAsync<SearchDocument>("*", new SearchOptions { Filter = filter, Select = { "id" } }, cancellationToken);
         var ids = new List<string>();
         await foreach (var result in results.Value.GetResultsAsync())
@@ -151,11 +160,11 @@ public class AzureSearchQueryService : ISearchQueryService
     public async Task<SearchQueryResponse> SearchAsync(SearchQueryRequest request, CancellationToken cancellationToken = default)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var filters = new List<string> { $"tenantId eq '{request.TenantId}'" };
+        var filters = new List<string> { SearchFilter.Eq("tenantId", request.TenantId) };
         if (!string.IsNullOrEmpty(request.Department))
-            filters.Add($"department eq '{request.Department}'");
+            filters.Add(SearchFilter.Eq("department", request.Department));
         if (!string.IsNullOrEmpty(request.DocType))
-            filters.Add($"docType eq '{request.DocType}'");
+            filters.Add(SearchFilter.Eq("docType", request.DocType));
 
         var options = new SearchOptions
         {

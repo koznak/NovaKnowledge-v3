@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using NovaKnowledge.Application.Interfaces;
 using NovaKnowledge.Contracts.Admin;
 
@@ -9,11 +10,13 @@ public sealed class HttpEvaluationClient : IEvaluationClient
 {
     private readonly HttpClient _http;
     private readonly IEvaluationRunRepository _repository;
+    private readonly ILogger<HttpEvaluationClient> _logger;
 
-    public HttpEvaluationClient(HttpClient http, IEvaluationRunRepository repository)
+    public HttpEvaluationClient(HttpClient http, IEvaluationRunRepository repository, ILogger<HttpEvaluationClient> logger)
     {
         _http = http;
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<Guid> TriggerEvaluationAsync(string? datasetPath, CancellationToken cancellationToken = default)
@@ -35,8 +38,9 @@ public sealed class HttpEvaluationClient : IEvaluationClient
             response.EnsureSuccessStatusCode();
             run.Status = Domain.Entities.EvaluationStatus.Running;
         }
-        catch
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
         {
+            _logger.LogError(ex, "Failed to trigger evaluation run {RunId} on the evaluation service", run.Id);
             run.Status = Domain.Entities.EvaluationStatus.Failed;
             run.ErrorMessage = "Failed to trigger evaluation service";
         }

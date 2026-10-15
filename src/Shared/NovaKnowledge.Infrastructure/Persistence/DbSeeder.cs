@@ -70,14 +70,6 @@ public static class DbSeeder
             });
         }
 
-        var contosoSettings = await db.TenantSettings.FirstOrDefaultAsync(t => t.TenantId == "contoso");
-        if (contosoSettings != null)
-        {
-            contosoSettings.UseMultiAgent = false;
-            if (contosoSettings.ChatModel is "gpt-4o-mini" or "gpt-5-mini")
-                contosoSettings.ChatModel = "gpt-5-mini-2";
-        }
-
         await db.SaveChangesAsync();
     }
 }

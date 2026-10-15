@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -7,6 +6,8 @@ using NovaKnowledge.Contracts.Chat;
 using NovaKnowledge.Contracts.Common;
 using NovaKnowledge.Contracts.Search;
 using NovaKnowledge.Domain.Entities;
+using NovaKnowledge.Infrastructure.Caching;
+using NovaKnowledge.Infrastructure.Chat;
 using NovaKnowledge.Infrastructure.Configuration;
 
 namespace NovaKnowledge.Chat.Api.Controllers;
@@ -22,9 +23,8 @@ public class ChatController : ControllerBase
     private readonly IPromptTemplateService _prompts;
     private readonly ITenantSettingsRepository _tenantSettings;
     private readonly ICacheService _cache;
-    private readonly HttpClient _orchestrationHttp;
-    private readonly IWebHostEnvironment _environment;
     private readonly AzureOpenAIOptions _openAiOptions;
+    private readonly PricingOptions _pricing;
     private readonly ILogger<ChatController> _logger;
 
     public ChatController(
@@ -35,9 +35,8 @@ public class ChatController : ControllerBase
         IPromptTemplateService prompts,
         ITenantSettingsRepository tenantSettings,
         ICacheService cache,
-        IHttpClientFactory httpClientFactory,
-        IWebHostEnvironment environment,
         IOptions<AzureOpenAIOptions> openAiOptions,
+        IOptions<PricingOptions> pricing,
         ILogger<ChatController> logger)
     {
         _conversations = conversations;
@@ -47,9 +46,8 @@ public class ChatController : ControllerBase
         _prompts = prompts;
         _tenantSettings = tenantSettings;
         _cache = cache;
-        _orchestrationHttp = httpClientFactory.CreateClient("orchestration");
-        _environment = environment;
         _openAiOptions = openAiOptions.Value;
+        _pricing = pricing.Value;
         _logger = logger;
     }
 
@@ -110,8 +108,7 @@ public class ChatController : ControllerBase
         var conversationId = session.Value.Id;
         var tenantId = session.Value.TenantId;
 
-        Response.ContentType = "text/event-stream";
-        Response.Headers.CacheControl = "no-cache";
+        ChatStreamWriter.Prepare(Response);
 
         var userMessage = new Message
         {
@@ -130,14 +127,17 @@ public class ChatController : ControllerBase
             Answer using provided context only. Cite sources with [n] notation.
             """;
 
-        // Retrieval with cache
-        var cacheKey = $"search:{tenantId}:{request.Content.GetHashCode()}";
+        var useHybrid = true;
+        var useSemanticRanker = true;
+
+        // Retrieval with a stable, process-independent cache key.
+        var cacheKey = CacheKeys.Search(tenantId, request.Content, settings.RetrievalTopK, useHybrid, useSemanticRanker);
         SearchQueryResponse? searchResult = await _cache.GetAsync<SearchQueryResponse>(cacheKey, cancellationToken);
         var retrievalSw = System.Diagnostics.Stopwatch.StartNew();
         if (searchResult == null)
         {
             searchResult = await _search.SearchAsync(new SearchQueryRequest(
-                request.Content, tenantId, settings.RetrievalTopK, UseHybrid: true), cancellationToken);
+                request.Content, tenantId, settings.RetrievalTopK, UseHybrid: useHybrid, UseSemanticRanker: useSemanticRanker), cancellationToken);
             await _cache.SetAsync(cacheKey, searchResult, TimeSpan.FromMinutes(10), cancellationToken);
         }
         retrievalSw.Stop();
@@ -145,10 +145,11 @@ public class ChatController : ControllerBase
         var citations = searchResult.Results.Select(r => new CitationDto(
             r.DocumentId, r.ChunkIndex, r.Content, r.Title, r.Score)).ToList();
 
-        await WriteSseAsync(new ChatStreamChunk("citations", Citations: citations), cancellationToken);
+        await ChatStreamWriter.WriteAsync(Response, new ChatStreamChunk("citations", Citations: citations), cancellationToken);
 
         string answer;
-        int promptTokens, completionTokens, llmMs;
+        int promptTokens = 0, completionTokens = 0, llmMs = 0;
+        List<AgentRun>? agentRuns = null;
 
         try
         {
@@ -163,50 +164,51 @@ public class ChatController : ControllerBase
                 llmMs = orchResult.TotalLlmLatencyMs;
 
                 var order = 0;
-                foreach (var step in orchResult.Trace)
+                agentRuns = orchResult.Trace.Select(step => new AgentRun
                 {
-                    await _conversations.AddAgentRunAsync(new AgentRun
-                    {
-                        ConversationId = conversationId,
-                        MessageId = null,
-                        AgentName = step.AgentName,
-                        Input = step.Input,
-                        Output = step.Output,
-                        DurationMs = step.DurationMs,
-                        OrderIndex = order++
-                    }, cancellationToken);
-                }
+                    ConversationId = conversationId,
+                    AgentName = step.AgentName,
+                    Input = step.Input,
+                    Output = step.Output,
+                    DurationMs = step.DurationMs,
+                    OrderIndex = order++
+                }).ToList();
+
+                // Orchestration produces a complete answer; emit it as a single token event.
+                await ChatStreamWriter.WriteAsync(Response, new ChatStreamChunk("token", Content: answer), cancellationToken);
             }
             else
             {
                 var context = string.Join("\n\n", searchResult.Results.Select((c, i) => $"[{i + 1}] {c.Content}"));
                 var userPrompt = $"Context:\n{context}\n\nQuestion: {request.Content}";
                 var llmSw = System.Diagnostics.Stopwatch.StartNew();
-                (answer, promptTokens, completionTokens) = await _chat.CompleteAsync(systemPrompt, userPrompt, cancellationToken);
+                var builder = new System.Text.StringBuilder();
+
+                await foreach (var update in _chat.StreamAsync(systemPrompt, userPrompt, cancellationToken))
+                {
+                    if (!string.IsNullOrEmpty(update.TokenDelta))
+                    {
+                        builder.Append(update.TokenDelta);
+                        await ChatStreamWriter.WriteAsync(Response, new ChatStreamChunk("token", Content: update.TokenDelta), cancellationToken);
+                    }
+
+                    if (update.IsFinal)
+                    {
+                        promptTokens = update.PromptTokens ?? 0;
+                        completionTokens = update.CompletionTokens ?? 0;
+                    }
+                }
+
+                llmSw.Stop();
                 llmMs = (int)llmSw.ElapsedMilliseconds;
+                answer = builder.ToString();
             }
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {
             _logger.LogError(ex, "LLM call failed for session {SessionId}", id);
-
-            if (_environment.IsDevelopment() && IsAzureDeploymentError(ex))
-            {
-                answer = BuildDevelopmentFallbackAnswer(request.Content, citations);
-                promptTokens = 0;
-                completionTokens = 0;
-                llmMs = 0;
-            }
-            else
-            {
-                await WriteSseAsync(new ChatStreamChunk("error", Content: GetUserFriendlyError(ex)), cancellationToken);
-                return;
-            }
-        }
-
-        foreach (var chunk in ChunkText(answer, 32))
-        {
-            await WriteSseAsync(new ChatStreamChunk("token", Content: chunk), cancellationToken);
+            await ChatStreamWriter.WriteAsync(Response, new ChatStreamChunk("error", Content: GetUserFriendlyError(ex)), cancellationToken);
+            return;
         }
 
         var assistantMessage = new Message
@@ -224,7 +226,21 @@ public class ChatController : ControllerBase
         await _conversations.AddMessageAsync(conversationId, assistantMessage, cancellationToken);
         await _conversations.SaveChangesAsync(cancellationToken);
 
-        await WriteSseAsync(new ChatStreamChunk("done", Message: MapMessage(assistantMessage)), cancellationToken);
+        // Persist agent trace steps linked to the assistant message so /trace?messageId works.
+        if (agentRuns is { Count: > 0 })
+        {
+            foreach (var run in agentRuns)
+            {
+                run.MessageId = assistantMessage.Id;
+                await _conversations.AddAgentRunAsync(run, cancellationToken);
+            }
+            await _conversations.SaveChangesAsync(cancellationToken);
+        }
+
+        ChatStreamWriter.RecordTurnMetrics(
+            assistantMessage.RetrievalLatencyMs, llmMs, promptTokens, completionTokens, assistantMessage.EstimatedCostUsd);
+
+        await ChatStreamWriter.WriteAsync(Response, new ChatStreamChunk("done", Message: MapMessage(assistantMessage)), cancellationToken);
     }
 
     private static bool IsAzureDeploymentError(Exception ex)
@@ -243,49 +259,17 @@ public class ChatController : ControllerBase
         return false;
     }
 
-    private string BuildDevelopmentFallbackAnswer(string question, IReadOnlyList<CitationDto> citations)
-    {
-        var citationNote = citations.Count > 0
-            ? $"Found {citations.Count} relevant document chunk(s)."
-            : "No documents are indexed yet, so retrieval returned no citations.";
-
-        return $"""
-            [Development fallback] Azure OpenAI chat deployment '{_openAiOptions.ChatDeployment}' is not available on your resource.
-
-            {citationNote}
-
-            Your question: {question}
-
-            To enable live answers:
-            1. In Azure AI Foundry, deploy a chat model (recommended: gpt-5-mini) with deployment name matching AzureOpenAI:ChatDeployment.
-            2. Restart Chat.Api and Orchestration.Api.
-            3. Upload HR/IT PDFs via Ingestion.Api so search returns citations.
-            """;
-    }
-
-    private static string GetUserFriendlyError(Exception ex)
+    private string GetUserFriendlyError(Exception ex)
     {
         if (IsAzureDeploymentError(ex))
-            return "Azure OpenAI chat deployment not found. Deploy gpt-5-mini in Azure AI Foundry and set AzureOpenAI:ChatDeployment.";
+            return "The configured Azure OpenAI chat deployment was not found. Deploy a chat model and set AzureOpenAI:ChatDeployment.";
 
-        return $"Chat failed: {ex.Message}";
+        return "The chat request failed. Please try again or contact support.";
     }
 
-    private async Task WriteSseAsync(ChatStreamChunk chunk, CancellationToken cancellationToken)
-    {
-        var json = JsonSerializer.Serialize(chunk);
-        await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
-        await Response.Body.FlushAsync(cancellationToken);
-    }
-
-    private static IEnumerable<string> ChunkText(string text, int size)
-    {
-        for (var i = 0; i < text.Length; i += size)
-            yield return text.Substring(i, Math.Min(size, text.Length - i));
-    }
-
-    private static decimal EstimateCost(int promptTokens, int completionTokens) =>
-        promptTokens * 0.00000015m + completionTokens * 0.0000006m;
+    private decimal EstimateCost(int promptTokens, int completionTokens) =>
+        (promptTokens / 1000m * _pricing.PromptCostPer1KTokens)
+        + (completionTokens / 1000m * _pricing.CompletionCostPer1KTokens);
 
     private static MessageResponse MapMessage(Message m)
     {

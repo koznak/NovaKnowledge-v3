@@ -94,7 +94,7 @@ public class AzureOpenAIChatService : IChatCompletionService
         }
     }
 
-    public async IAsyncEnumerable<string> StreamCompleteAsync(
+    public async IAsyncEnumerable<ChatStreamUpdate> StreamAsync(
         string systemPrompt, string userPrompt, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var chatClient = _client.GetChatClient(_options.ChatDeployment);
@@ -104,13 +104,23 @@ public class AzureOpenAIChatService : IChatCompletionService
             new OpenAI.Chat.UserChatMessage(userPrompt)
         };
 
-        await foreach (var update in chatClient.CompleteChatStreamingAsync(messages, cancellationToken: cancellationToken))
+        var options = new OpenAI.Chat.ChatCompletionOptions { EndUserId = null };
+
+        await foreach (var update in chatClient.CompleteChatStreamingAsync(messages, options, cancellationToken))
         {
-            foreach (var part in update.ContentUpdate)
+            var delta = update.ContentUpdate is { Count: > 0 }
+                ? string.Concat(update.ContentUpdate.Select(p => p.Text))
+                : null;
+
+            var usage = update.Usage;
+            if (usage is not null)
             {
-                if (!string.IsNullOrEmpty(part.Text))
-                    yield return part.Text;
+                yield return new ChatStreamUpdate(null, usage.InputTokenCount, usage.OutputTokenCount, IsFinal: true);
+                continue;
             }
+
+            if (!string.IsNullOrEmpty(delta))
+                yield return new ChatStreamUpdate(delta, null, null, IsFinal: false);
         }
     }
 }

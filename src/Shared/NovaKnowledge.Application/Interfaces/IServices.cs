@@ -40,11 +40,22 @@ public interface IChatCompletionService
         string userPrompt,
         CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<string> StreamCompleteAsync(
+    IAsyncEnumerable<ChatStreamUpdate> StreamAsync(
         string systemPrompt,
         string userPrompt,
         CancellationToken cancellationToken = default);
 }
+
+/// <summary>A single update from a streaming chat completion.</summary>
+/// <param name="TokenDelta">Incremental token text emitted by the model, if any.</param>
+/// <param name="PromptTokens">Prompt token count, available on the final update.</param>
+/// <param name="CompletionTokens">Completion token count, available on the final update.</param>
+/// <param name="IsFinal">True for the terminal update carrying usage.</param>
+public record ChatStreamUpdate(
+    string? TokenDelta,
+    int? PromptTokens,
+    int? CompletionTokens,
+    bool IsFinal);
 
 public interface IBlobStorageService
 {
