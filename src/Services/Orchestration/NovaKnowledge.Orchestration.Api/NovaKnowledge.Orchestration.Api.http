@@ -1,6 +1,9 @@
-@NovaKnowledge.Orchestration.Api_HostAddress = http://localhost:5056
+@NovaKnowledge.Orchestration.Api_HostAddress = http://localhost:5002
 
-GET {{NovaKnowledge.Orchestration.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Run the multi-agent orchestration pipeline
+POST {{NovaKnowledge.Orchestration.Api_HostAddress}}/api/orchestration/run
+Content-Type: application/json
+
+{ "message": "What is the BYOD policy?", "tenantId": "contoso", "conversationId": "00000000-0000-0000-0000-000000000000", "topK": 5 }
 
 ###

@@ -1,6 +1,23 @@
-@NovaKnowledge.Chat.Api_HostAddress = http://localhost:5285
+@NovaKnowledge.Chat.Api_HostAddress = http://localhost:5001
 
-GET {{NovaKnowledge.Chat.Api_HostAddress}}/weatherforecast/
+### Create a chat session
+POST {{NovaKnowledge.Chat.Api_HostAddress}}/api/chat/sessions
+Content-Type: application/json
+
+{ "tenantId": "contoso" }
+
+### Send a message (Server-Sent Events stream)
+POST {{NovaKnowledge.Chat.Api_HostAddress}}/api/chat/sessions/{{sessionId}}/messages
+Content-Type: application/json
+
+{ "content": "What is the PTO policy?" }
+
+### Get message history
+GET {{NovaKnowledge.Chat.Api_HostAddress}}/api/chat/sessions/{{sessionId}}/messages
+Accept: application/json
+
+### Get agent trace for a session
+GET {{NovaKnowledge.Chat.Api_HostAddress}}/api/chat/sessions/{{sessionId}}/trace
 Accept: application/json
 
 ###

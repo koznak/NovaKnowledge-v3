@@ -1,6 +1,13 @@
-@NovaKnowledge.Feedback.Api_HostAddress = http://localhost:5279
+@NovaKnowledge.Feedback.Api_HostAddress = http://localhost:5005
 
-GET {{NovaKnowledge.Feedback.Api_HostAddress}}/weatherforecast/
+### Submit feedback for a message
+POST {{NovaKnowledge.Feedback.Api_HostAddress}}/api/feedback
+Content-Type: application/json
+
+{ "messageId": "00000000-0000-0000-0000-000000000000", "tenantId": "contoso", "rating": 1, "comment": "Accurate and cited." }
+
+### Export feedback as JSONL
+POST {{NovaKnowledge.Feedback.Api_HostAddress}}/api/feedback/export?days=7
 Accept: application/json
 
 ###

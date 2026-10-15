@@ -1,6 +1,13 @@
-@NovaKnowledge.Search.Api_HostAddress = http://localhost:5134
+@NovaKnowledge.Search.Api_HostAddress = http://localhost:5003
 
-GET {{NovaKnowledge.Search.Api_HostAddress}}/weatherforecast/
+### Hybrid search query
+POST {{NovaKnowledge.Search.Api_HostAddress}}/api/search/query
+Content-Type: application/json
+
+{ "query": "PTO policy", "tenantId": "contoso", "topK": 5, "useHybrid": true }
+
+### Ensure the search index exists
+POST {{NovaKnowledge.Search.Api_HostAddress}}/api/search/index/ensure
 Accept: application/json
 
 ###

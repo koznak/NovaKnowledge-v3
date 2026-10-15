@@ -1,6 +1,26 @@
-@NovaKnowledge.Ingestion.Api_HostAddress = http://localhost:5214
+@NovaKnowledge.Ingestion.Api_HostAddress = http://localhost:5004
 
-GET {{NovaKnowledge.Ingestion.Api_HostAddress}}/weatherforecast/
+### Upload a document (multipart/form-data)
+POST {{NovaKnowledge.Ingestion.Api_HostAddress}}/api/ingest/documents
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="file"; filename="sample-hr-policy.txt"
+Content-Type: text/plain
+
+< ./sample-hr-policy.txt
+------Boundary
+Content-Disposition: form-data; name="tenantId"
+
+contoso
+------Boundary--
+
+### List documents
+GET {{NovaKnowledge.Ingestion.Api_HostAddress}}/api/ingest/documents?page=1&pageSize=20
+Accept: application/json
+
+### Get document status
+GET {{NovaKnowledge.Ingestion.Api_HostAddress}}/api/ingest/documents/{{documentId}}/status
 Accept: application/json
 
 ###
