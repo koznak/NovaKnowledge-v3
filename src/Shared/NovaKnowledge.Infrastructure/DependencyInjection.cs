@@ -145,8 +145,12 @@ public static class DependencyInjection
         });
 
         services.AddHealthChecks()
-            .AddNpgSql(connectionString, name: "postgresql")
+            .AddNpgSql(connectionString, name: "postgresql", tags: ["ready"])
+            .AddCheck<AzureSearchHealthCheck>("azure-search", tags: ["ready"])
             .AddCheck("self", () => HealthCheckResult.Healthy(serviceName));
+
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
 
         services.AddOpenTelemetry()
             .ConfigureResource(r => r.AddService(serviceName))
@@ -180,7 +184,18 @@ public static class DependencyInjection
     public static WebApplication MapNovaKnowledgeHealthChecks(this WebApplication app)
     {
         app.MapHealthChecks("/health");
+        app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready")
+        });
         app.MapGet("/ready", () => Results.Ok(new { status = "ready", timestamp = DateTimeOffset.UtcNow }));
+        return app;
+    }
+
+    /// <summary>Registers the RFC 7807 exception-handling middleware. Call early in the pipeline.</summary>
+    public static WebApplication UseNovaKnowledgeExceptionHandling(this WebApplication app)
+    {
+        app.UseExceptionHandler();
         return app;
     }
 

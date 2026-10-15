@@ -6,6 +6,9 @@ builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new() { Title = "NovaKnow
 builder.Services.AddNovaKnowledgeInfrastructure(builder.Configuration, "Search.Api");
 
 var app = builder.Build();
+
+app.UseNovaKnowledgeExceptionHandling();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

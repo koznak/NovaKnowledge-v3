@@ -322,11 +322,14 @@ flowchart LR
 ```mermaid
 flowchart LR
     M365["Microsoft 365 User"] --> CS["Copilot Studio"]
-    CS --> Connector["Custom Connector\nOAuth 2.0"]
+    CS --> Connector["Custom Connector"]
     Connector --> GW["NovaKnowledge Gateway"]
     GW --> Chat["Chat.Api"]
     GW --> Search["Search.Api"]
 ```
+
+> In this demo the connector calls the Gateway without authentication. Adding Entra ID
+> OAuth is a documented production extension — see [Copilot Studio Setup](../copilot-studio-setup.md).
 
 See [Copilot Studio Setup](../copilot-studio-setup.md) for connector configuration.
 

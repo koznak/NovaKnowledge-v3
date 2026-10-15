@@ -1,5 +1,10 @@
 # Copilot Studio Integration Guide
 
+> **Scope note:** NovaKnowledge ships as a **single-tenant demo with no authentication**.
+> The OAuth/Entra ID steps below describe a **production extension**, not functionality
+> that exists in this repository. In the current build the Gateway exposes the APIs
+> directly (see the "Scope & Limitations" section of the [README](../README.md)).
+
 ## Overview
 
 NovaKnowledge exposes REST APIs via the YARP Gateway for Microsoft Copilot Studio custom connectors.
@@ -7,30 +12,15 @@ NovaKnowledge exposes REST APIs via the YARP Gateway for Microsoft Copilot Studi
 ## Prerequisites
 
 - Power Platform environment with Copilot Studio license
-- Azure Entra ID app registration for OAuth
 - NovaKnowledge Gateway deployed and accessible (HTTPS)
 
-## Step 1: Register Entra ID Application
-
-1. Azure Portal → Entra ID → App registrations → New registration
-2. Name: `NovaKnowledge-Copilot-Connector`
-3. Redirect URI: `https://global.consent.azure-apim.net/redirect`
-4. Expose an API scope: `api://{client-id}/access_as_user`
-5. Note Client ID and Tenant ID
-
-## Step 2: Configure Gateway OAuth (Production)
-
-Add JWT Bearer validation to Gateway using Entra ID metadata.
-For dev, use API key header `X-Api-Key`.
-
-## Step 3: Create Custom Connector
+## Step 1: Create Custom Connector
 
 1. Power Platform → Custom Connectors → New
 2. General:
    - Host: `your-gateway.azurecontainerapps.io`
    - Base URL: `/`
-3. Security: OAuth 2.0 (Authorization Code) with Entra ID
-4. Actions:
+3. Actions:
 
 ### AskQuestion
 - Method: POST
@@ -53,7 +43,7 @@ For dev, use API key header `X-Api-Key`.
 - URL: `/api/chat/sessions`
 - Body: `{ "tenantId": "contoso" }`
 
-## Step 4: Build Copilot Topics
+## Step 2: Build Copilot Topics
 
 **Topic: Ask HR Policy**
 1. Trigger phrase: "What is the PTO policy?"
@@ -67,3 +57,15 @@ For dev, use API key header `X-Api-Key`.
 ## Architecture Note
 
 Copilot Studio handles M365 conversational UX; NovaKnowledge handles RAG, governance, token tracking, and agent orchestration in .NET microservices.
+
+## Production Extension: Entra ID OAuth (Not Implemented)
+
+To harden this for production you would add authentication in front of the Gateway. This is
+**design guidance only** — no auth code is present in this repo:
+
+1. Azure Portal → Entra ID → App registrations → New registration
+2. Name: `NovaKnowledge-Copilot-Connector`
+3. Redirect URI: `https://global.consent.azure-apim.net/redirect`
+4. Expose an API scope: `api://{client-id}/access_as_user`
+5. Add JWT Bearer validation to the Gateway using the Entra ID metadata document
+6. Configure the custom connector security as OAuth 2.0 (Authorization Code)

@@ -1,5 +1,9 @@
 # NovaKnowledge — 15-Minute Interview Demo Script
 
+> **Scope note:** This is a **single-tenant demo with no authentication**. `tenantId` is a
+> configuration default (`"contoso"`), not an authenticated identity. Any multi-tenant or
+> OAuth references describe production extensions, not the code in this repo.
+
 ## Setup (before interview)
 - [ ] Gateway + all services running (or Azure Container Apps deployed)
 - [ ] At least 2 Contoso HR/IT PDFs indexed

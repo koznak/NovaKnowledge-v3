@@ -8,6 +8,8 @@ builder.Services.AddNovaKnowledgeInfrastructure(builder.Configuration, "Chat.Api
 var app = builder.Build();
 await app.Services.EnsureDatabaseAsync();
 
+app.UseNovaKnowledgeExceptionHandling();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
