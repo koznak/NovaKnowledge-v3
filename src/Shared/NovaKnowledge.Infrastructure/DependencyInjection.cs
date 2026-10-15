@@ -63,13 +63,19 @@ public static class DependencyInjection
         services.AddSingleton(sp =>
         {
             var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AzureSearchOptions>>().Value;
-            return new SearchIndexClient(new Uri(opts.Endpoint), new AzureKeyCredential(opts.ApiKey));
+            var credential = AzureClientFactory.CreateSearchCredential(opts);
+            return credential is null
+                ? new SearchIndexClient(new Uri(opts.Endpoint), AzureClientFactory.CreateSearchTokenCredential())
+                : new SearchIndexClient(new Uri(opts.Endpoint), credential);
         });
 
         services.AddSingleton(sp =>
         {
             var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AzureSearchOptions>>().Value;
-            return new SearchClient(new Uri(opts.Endpoint), opts.IndexName, new AzureKeyCredential(opts.ApiKey));
+            var credential = AzureClientFactory.CreateSearchCredential(opts);
+            return credential is null
+                ? new SearchClient(new Uri(opts.Endpoint), opts.IndexName, AzureClientFactory.CreateSearchTokenCredential())
+                : new SearchClient(new Uri(opts.Endpoint), opts.IndexName, credential);
         });
 
         services.AddSingleton(sp =>

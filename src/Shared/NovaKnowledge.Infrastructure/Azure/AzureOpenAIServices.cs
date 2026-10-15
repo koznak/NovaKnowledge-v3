@@ -142,4 +142,15 @@ public static class AzureClientFactory
 
         return new AzureOpenAIClient(new Uri(endpoint), new global::Azure.Identity.DefaultAzureCredential());
     }
+
+    /// <summary>
+    /// Builds an Azure AI Search credential. When no API key is configured, falls back to
+    /// <see cref="global::Azure.Identity.DefaultAzureCredential"/> (managed identity / Azure CLI),
+    /// matching the Azure OpenAI client behavior and avoiding a hard failure on placeholder config.
+    /// </summary>
+    public static AzureKeyCredential? CreateSearchCredential(AzureSearchOptions options) =>
+        string.IsNullOrWhiteSpace(options.ApiKey) ? null : new AzureKeyCredential(options.ApiKey);
+
+    public static global::Azure.Core.TokenCredential CreateSearchTokenCredential() =>
+        new global::Azure.Identity.DefaultAzureCredential();
 }
