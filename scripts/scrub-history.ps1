@@ -1,24 +1,29 @@
-# Scrub secrets and personal data from the entire git history (local, safe, non-destructive to the
-# remote). Produces a rewritten clone you then force-push yourself.
+# Scrub secrets and personal data from the entire git history and publish the cleaned history to a
+# NEW repository (recommended). The original repo is never modified and is never used as a push
+# target, so the contaminated history is left behind entirely.
 #
-# This automates steps 2-4 of docs/secrets-rotation.md:
+# This automates steps 2-5 of docs/secrets-rotation.md ("Option C: new repo, preserved clean
+# history"):
 #   1. clones the repo to a throwaway folder (never touches your working tree)
 #   2. removes the personal brief files from all history (--invert-paths)
 #   3. runs `git filter-repo --replace-text secrets.txt`
 #   4. verifies that no secret/PII literal survives in ANY commit
+#   5. optionally creates a NEW GitHub repo and pushes the cleaned clone to it
 #
-# It does NOT push. Force-pushing is a destructive, irreversible remote operation you must run
-# yourself after rotating the exposed keys in Azure.
+# It never force-pushes and never touches your existing remote. Creating/pushing to a new repo is
+# the only remote operation, and it only happens with -NewRepo.
 #
 # Usage:
-#   .\scripts\scrub-history.ps1                 # uses secrets.txt + origin URL from ./git
-#   .\scripts\scrub-history.ps1 -Source <path>  # scrub a different local repo
-#   .\scripts\scrub-history.ps1 -OutDir <path>  # choose the output location
+#   .\scripts\scrub-history.ps1                          # scrub + verify only (no push)
+#   .\scripts\scrub-history.ps1 -NewRepo koznak/NovaKnowledge-v2
+#   .\scripts\scrub-history.ps1 -Source <path>           # scrub a different local repo
+#   .\scripts\scrub-history.ps1 -OutDir <path>           # choose the output location
 
 param(
     [string]$Source,
     [string]$OutDir,
     [string]$MapFile,
+    [string]$NewRepo,
     [string[]]$RemovePath = @(
         "docs/redacted-company-interview-brief.md",
         "docs/redacted-company-interview-brief.pdf"
@@ -124,18 +129,45 @@ try {
     }
 
     Write-Host "`nPASS: all $($literals.Count) literal(s) removed from every commit." -ForegroundColor Green
-    Write-Host @"
+
+    # --- Optional: publish cleaned history to a NEW repo (Option C) ------------------------------
+    if ($NewRepo) {
+        Write-Host "`nPublishing cleaned history to new repo '$NewRepo'..." -ForegroundColor Cyan
+
+        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+            throw "GitHub CLI (gh) not found. Install it, or push manually from $OutDir."
+        }
+
+        # Create the repo empty (no README/license) and wire it as 'origin' in the cleaned clone.
+        gh repo create $NewRepo --private --source "$OutDir" --remote origin
+        if ($LASTEXITCODE -ne 0) { throw "gh repo create failed. Does '$NewRepo' already exist?" }
+
+        git push -u origin main
+        if ($LASTEXITCODE -ne 0) { throw "git push to '$NewRepo' failed." }
+
+        Write-Host @"
+
+The cleaned history is now in '$NewRepo' (private, no secrets).
+  - Verify one old commit has no secrets, then flip public:
+      gh repo edit $NewRepo --visibility public --accept-visibility-change-consequences
+  - Archive or delete the OLD contaminated repo:
+      gh repo archive <old-owner>/<old-repo>
+"@ -ForegroundColor Green
+    }
+    else {
+        Write-Host @"
 
 Next steps (run these yourself):
   1. Rotate the exposed Azure keys (docs/secrets-rotation.md section 1).
-  2. Push the cleaned history:
+  2. Publish the cleaned history to a NEW repo (recommended), e.g.:
        cd "$OutDir"
-       git remote add origin <your-repo-url>
-       git push --force --all origin
-       git push --force --tags origin
-  3. Flip visibility:
-       gh repo edit koznak/NovaKnowledge --visibility public --accept-visibility-change-consequences
+       gh repo create <owner>/<new-repo> --private --source . --remote origin
+       git push -u origin main
+     ...or re-run this script with: -NewRepo <owner>/<new-repo>
+  3. Flip visibility once verified:
+       gh repo edit <owner>/<new-repo> --visibility public --accept-visibility-change-consequences
 "@ -ForegroundColor Yellow
+    }
 }
 finally {
     Pop-Location

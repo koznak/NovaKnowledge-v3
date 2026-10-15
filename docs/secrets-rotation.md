@@ -2,16 +2,20 @@
 
 This document is the one-time procedure to make the repository safe to go public. Earlier commits
 contained **live Azure credentials** and **personal information**, so they must be removed from
-**all history** (not just the current files) and the keys must then be **rotated** in Azure.
+**all history** (not just the current files) and the keys must be **rotated** in Azure.
 
-> **Rotate first, then scrub.** Assume the keys are already compromised, so regenerating them first
-> is both safer and simpler than ordering the steps the other way around.
+> **Rotating the keys is the security step; scrubbing history is hygiene.** Once a key is rotated the
+> copies in history are worthless, so rotation is mandatory regardless of what you do with git.
+
+> **Recommended approach — new repo (Option C).** Rather than force-pushing the existing repo, push
+> the scrubbed history to a **brand-new repository**. The secrets were never sent to the new remote,
+> so there are no dangling/cached objects, and no force-push is required.
 
 > **Do not put real secret values in this file.** It is committed. The actual replacement strings
 > live in a local, git-ignored file (`secrets.txt`).
 
-> These steps rewrite git history and are destructive. Work on a backup/fresh clone. See
-> "Run it yourself" at the bottom.
+> These steps rewrite git history and are destructive. Work on a copy. See "Run it yourself" at the
+> bottom.
 
 ## 0. What is actually exposed
 
@@ -65,8 +69,8 @@ literal:<actual-company>==>REDACTED_COMPANY
 
 ## 3. Rewrite history
 
-The repository ships `scripts/scrub-history.ps1`, which automates steps 3–4 safely (it works on a
-throwaway clone and never touches your working tree or the remote):
+The repository ships `scripts/scrub-history.ps1`, which automates steps 3–5 safely (it works on a
+throwaway clone and never touches your existing working tree or remote):
 
 ```powershell
 .\scripts\scrub-history.ps1
@@ -74,7 +78,7 @@ throwaway clone and never touches your working tree or the remote):
 
 It clones to a temp folder, removes the personal brief files, runs `git filter-repo --replace-text`,
 and then **fails loudly** if any scrubbed literal survives in any commit. On success it prints the
-exact push commands.
+exact publish steps.
 
 Equivalent manual steps:
 
@@ -101,35 +105,53 @@ git log --all -p | rg -i "<name>|<email>|<company>"
 git log --all --name-only --pretty=format: | rg -i "interview-brief"
 ```
 
-## 5. Re-add the remote and force-push
+## 5. Publish the cleaned history to a NEW repo (recommended)
+
+Pushing the scrubbed clone to a **brand-new repository** is safer than force-pushing the old one:
+the secrets were never sent to the new remote, so there are no dangling/cached objects to worry
+about, and no force-push is needed.
+
+```powershell
+.\scripts\scrub-history.ps1 -NewRepo <owner>/<new-repo>
+```
+
+This creates a new **private** repo and pushes the cleaned history to it. Or do it manually:
 
 ```bash
-git remote add origin https://github.com/koznak/NovaKnowledge.git
-git push --force --all origin
-git push --force --tags origin
+cd <scrubbed-clone-dir>
+gh repo create <owner>/<new-repo> --private --source . --remote origin
+git push -u origin main
 ```
+
+Then archive or delete the OLD contaminated repo:
+
+```bash
+gh repo archive <old-owner>/<old-repo>
+```
+
+> A force-push to the existing repo (`git push --force --all origin`) also works, but GitHub may
+> retain unreachable objects/cached views of the old commits. A new repo avoids that entirely.
 
 ## 6. Confirm
 
 - [ ] Keys rotated in Azure; new values only in user-secrets / ignored files.
-- [ ] Every `rg` check in step 4 prints nothing.
-- [ ] The public repo's history (browse a commit from before the scrub) shows no secrets/PII.
+- [ ] Every check in step 4 prints nothing.
+- [ ] The new repo's history (browse an old commit) shows no secrets/PII.
+- [ ] The old contaminated repo is archived or deleted.
 - [ ] The CI gitleaks job passes.
 
 ## Run it yourself
 
-I (the assistant) do **not** run history rewrites or force-pushes. The steps are destructive and
-must be run by you:
+I (the assistant) do **not** force-push or run history rewrites on your remotes. The publish step
+is yours:
 
 ```powershell
 # Rotate keys in Azure first, then:
-.\scripts\scrub-history.ps1           # clones, scrubs, verifies (no push)
-# follow the push commands it prints
+.\scripts\scrub-history.ps1 -NewRepo <owner>/<new-repo>   # scrub + verify + push to new repo
 ```
 
-Or manually on a fresh clone:
+Or, to scrub and inspect first without pushing:
 
-```bash
-git clone https://github.com/koznak/NovaKnowledge.git nk-scrub && cd nk-scrub
-# add secrets.txt, then follow steps 2–6
+```powershell
+.\scripts\scrub-history.ps1    # clones, scrubs, verifies; prints manual publish steps
 ```
