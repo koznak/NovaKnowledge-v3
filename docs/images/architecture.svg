@@ -116,9 +116,9 @@
   <path class="flowA" d="M510,178 L576,292"/>
   <path class="flowA" d="M830,133 L896,150"/>
   <path class="flowA" d="M830,187 L896,270"/>
-  <path class="flowB" d="M700,272 L700,442"/>
+  <path class="flowB" d="M580,295 L556,295 L556,479 L580,479"/>
   <path class="flowB" d="M830,479 L896,300"/>
   <path class="flow" d="M700,512 L700,526"/>
   <path class="flowB" d="M700,600 L700,616"/>
-  <path class="flowA" d="M700,406 L700,442"/>
+  <path class="flowA" d="M700,426 L700,442"/>
 </svg>
